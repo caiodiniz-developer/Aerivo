@@ -43,8 +43,14 @@ export function initSmoothScroll() {
     // `lerp` em vez de `duration`: é o modo recomendado do Lenis e independe
     // de framerate. `duration` reinicia uma animação por evento de roda, o
     // que em trackpad (dezenas de eventos por segundo) se atropela.
-    lerp: 0.12,
-    smoothWheel: !reducedMotion,
+    // Sob reduced-motion o scroll fica mais direto, mas NÃO deixa de ser
+    // suave. A preferência existe contra movimento autônomo (parallax, coisas
+    // que se mexem sozinhas); suavizar a rolagem é resposta 1:1 ao gesto do
+    // próprio usuário. Desligar aqui era o único interruptor capaz de matar o
+    // smooth scroll por completo — e é ligado por "efeitos de animação" off
+    // no Windows, economia de bateria, ou "Reduce motion" no macOS.
+    lerp: reducedMotion ? 0.3 : 0.12,
+    smoothWheel: true,
     // Touch fica nativo: suavizar o dedo deixa a página com sensação pesada.
     syncTouch: false,
     wheelMultiplier: 1,
