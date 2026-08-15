@@ -17,11 +17,11 @@ const SCROLL_PER_DEST = 0.75
 /**
  * Interpolação entre o progresso do scroll e o da timeline.
  *
- * Perto de zero, a timeline salta de tick em tick da roda do mouse e o
- * movimento vira degrau. 0,25 é o ponto em que os degraus somem sem que dê
- * para perceber atraso entre o dedo e o avião.
+ * Curto de propósito: quem suaviza o input da roda é o Lenis, globalmente.
+ * Somar um scrub longo aqui seria interpolar duas vezes — Lenis suaviza, GSAP
+ * suaviza de novo — e o avião passaria a correr atrás do dedo.
  */
-const SCRUB = 0.25
+const SCRUB = 0.1
 
 const brl = new Intl.NumberFormat('pt-BR', {
   style: 'currency',

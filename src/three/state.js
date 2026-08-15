@@ -44,12 +44,11 @@ export const flight = {
    * lê é o `useFrame` do avião. Uma timeline só é dona destes números por vez,
    * então nunca há duas animações disputando a mesma pose.
    *
-   *   z  −34 fora à direita  →  +34 fora à esquerda
+   *   x  −34 fora à direita  →  +34 fora à esquerda
    *   y  altitude
-   *   pitch  radianos, positivo = nariz para cima
-   *   loopAngle  0→2π durante a manobra de 360°
+   *   rotation  graus, escrito pelo `autoRotate` do MotionPath
    */
-  air: { z: -34, y: 8, pitch: 0, loopAngle: 0 },
+  air: { x: -34, y: 7.5, rotation: 0 },
   /** 0→1 dentro do destino ativo (só para leitura externa). */
   crossU: 0,
   /** 0→1: o avião estacionando de lado, no fecho da página. */

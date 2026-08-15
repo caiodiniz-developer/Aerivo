@@ -1,134 +1,140 @@
 import gsap from 'gsap'
+import { MotionPathPlugin } from 'gsap/MotionPathPlugin'
 import { flight } from '../three/state'
+
+gsap.registerPlugin(MotionPathPlugin)
 
 /**
  * Coreografia da viagem — 100% dirigida pelo scroll.
  *
- * Uma master timeline, `ease: 'none'` em tudo, ligada a um ScrollTrigger com
- * `scrub`. Nada aqui roda sozinho: não há `onComplete`, `delayedCall` nem
- * timer. A posição do avião é literalmente uma função do progresso do scroll,
- * então parar o dedo para o avião e voltar o scroll desfaz a manobra.
+ * Cada destino é UMA curva só, percorrida por MotionPath com `curviness`.
+ * Entrada, manobra e saída são o mesmo caminho contínuo, então não existe
+ * emenda entre trechos — era a cadeia de `tl.to()` com coordenadas duras que
+ * produzia os saltinhos e as rotações secas na volta de 360°.
  *
- * Cada destino recebe um segmento de duração 1 — faixas exatamente iguais,
- * derivadas de `destinations.length`, para nenhum ser pulado.
+ * O avião é um modelo 3D, não um elemento DOM: o MotionPath anima um objeto
+ * JS puro (`flight.air`), e o `useFrame` lê `x`, `y` e `rotation` de lá.
  *
- * Sistema de coordenadas: a câmera do trecho olha de +X para a origem, então
- * −Z cai à DIREITA da tela. O voo vai sempre de z negativo para z positivo.
+ *   x  posição ao longo da tela. −34 fora à direita → +34 fora à esquerda
+ *   y  altitude
+ *   rotation  graus, escrito pelo `autoRotate` a partir da tangente
  */
 
-/** Fora de quadro dos dois lados. A borda visível fica em |z| ≈ 19. */
 export const OFFSCREEN_RIGHT = -34
 export const OFFSCREEN_LEFT = 34
 
 const BASE_Y = 7.5
 
-/** Inclinações sutis: ~4° subindo, ~3° descendo. */
-const PITCH_UP = 0.075
-const PITCH_DOWN = -0.055
-
-/** Raio do laço. Precisa casar com LOOP_R do Aircraft. */
-const LOOP_R = 7
+/**
+ * Curva do voo normal: sobe, afunda de leve, estabiliza. As variações são
+ * pequenas de propósito — o que tira a sensação de linha reta é a curvatura
+ * contínua, não a amplitude.
+ */
+const cruise = (lift) => [
+  { x: OFFSCREEN_RIGHT, y: BASE_Y },
+  { x: -18, y: BASE_Y + 1.7 * lift },
+  { x: -4, y: BASE_Y - 1.3 * lift },
+  { x: 12, y: BASE_Y + 0.9 * lift },
+  { x: OFFSCREEN_LEFT, y: BASE_Y },
+]
 
 /**
- * Um segmento de destino. Soma exatamente 1 de duração.
+ * Curva com looping. O laço tem ~5 unidades de largura por ~4,8 de altura —
+ * na escala desta câmera, algo em torno de 210×200px no desktop. Compacto de
+ * propósito: o laço anterior tinha raio 7 e varria meia tela na vertical.
  *
- *   0.00 → 0.62   travessia (com laço no meio, se for o caso)
- *   0.62 → 0.80   saída completa pela esquerda
- *   0.80 → 0.96   crossfade para o próximo destino
- *   0.96          reset invisível para fora da direita
+ * Repare que o avião AVANÇA durante a volta: entra em x=−6 e sai em −5,4,
+ * então é uma espiral rasa, não um pião parado no ar.
  */
-function addSegment(tl, { loop, current, next, mobile }) {
+const loop = (lift) => {
+  const r = 2.4 * lift
+  return [
+    { x: OFFSCREEN_RIGHT, y: BASE_Y },
+    { x: -20, y: BASE_Y + 1.5 * lift },
+    { x: -10, y: BASE_Y - 0.6 * lift },
+    // entrada no laço, subindo
+    { x: -6, y: BASE_Y - 0.3 },
+    { x: -6 + r, y: BASE_Y + r },
+    { x: -6, y: BASE_Y + r * 2 },
+    { x: -6 - r, y: BASE_Y + r },
+    // fecha o círculo um pouco à frente de onde entrou
+    { x: -5.4, y: BASE_Y - 0.3 },
+    { x: 4, y: BASE_Y + 1.1 * lift },
+    { x: 16, y: BASE_Y - 0.4 * lift },
+    { x: OFFSCREEN_LEFT, y: BASE_Y },
+  ]
+}
+
+/** O trecho de voo ocupa a maior parte; o resto é a troca de fundo. */
+const FLIGHT_PORTION = 0.8
+const FADE_PORTION = 0.15
+
+function addSegment(tl, { loop: isLoop, current, next, lift }) {
   const air = flight.air
-  const lift = mobile ? 0.55 : 1 // no mobile o desenho vertical é mais discreto
 
-  // Entrada pela direita, ganhando altura.
+  tl.set(air, { x: OFFSCREEN_RIGHT, y: BASE_Y, rotation: 0 })
+
   tl.to(air, {
-    z: -14,
-    y: BASE_Y + 1.7 * lift,
-    pitch: PITCH_UP * lift,
-    duration: 0.24,
+    motionPath: {
+      path: isLoop ? loop(lift) : cruise(lift),
+      curviness: 1.3,
+      // Única fonte de rotação durante o voo: a tangente da curva. Nenhum
+      // outro tween toca em `rotation`, então não há conflito nem reset seco.
+      autoRotate: true,
+    },
+    duration: FLIGHT_PORTION,
   })
 
-  // Afunda de leve: é esta segunda curva que tira a sensação de linha reta.
-  tl.to(air, {
-    z: loop ? -4 : 4,
-    y: BASE_Y - 1.3 * lift,
-    pitch: PITCH_DOWN * lift,
-    duration: 0.22,
-  })
-
-  if (loop) {
-    // Laço: x, y e rotação ao mesmo tempo. O avanço em z continua durante a
-    // volta — parado no eixo seria pião, não avião de papel. O arco em si é
-    // somado pelo Aircraft a partir de `loopAngle`, então aqui só conduzimos
-    // a trajetória-base e o ângulo, e os dois avançam juntos.
-    tl.to(air, { z: '+=8', y: BASE_Y, pitch: 0, duration: 0.16 })
-    tl.to(air, { loopAngle: Math.PI * 2, duration: 0.16 }, '<')
-    // 2π ≡ 0: zera para a rotação não acumular de destino em destino.
-    tl.set(air, { loopAngle: 0 })
-    tl.to(air, { z: '+=5', y: BASE_Y + 0.6 * lift, pitch: PITCH_UP * 0.4 * lift, duration: 0.1 })
-  }
-
-  // Sai por completo pela esquerda.
-  tl.to(air, { z: OFFSCREEN_LEFT, y: BASE_Y + 0.4, pitch: 0, duration: loop ? 0.12 : 0.34 })
-
-  // Só agora, com o avião fora de quadro, os fundos se cruzam — os dois ao
-  // mesmo tempo (`'<'`), nunca em sequência, senão abre preto no meio.
+  // Com o avião já fora de quadro, os dois fundos se cruzam ao mesmo tempo.
   if (next) {
-    tl.to(current, { opacity: 0, scale: 1.03, duration: 0.15 }, '>-0.02')
-    tl.fromTo(next, { opacity: 0, scale: 1.03 }, { opacity: 1, scale: 1, duration: 0.15 }, '<')
-
-    // Reset invisível: o avião já está fora, então o "teletransporte" não é
-    // visto — e, ao voltar o scroll, ele reaparece pela esquerda corretamente.
-    tl.set(air, { z: OFFSCREEN_RIGHT, y: BASE_Y, pitch: 0, loopAngle: 0 })
+    tl.to(current, { opacity: 0, scale: 1.03, duration: FADE_PORTION }, '>-0.02')
+    tl.fromTo(next, { opacity: 0, scale: 1.03 }, { opacity: 1, scale: 1, duration: FADE_PORTION }, '<')
+    // Normalização da rotação só aqui, com o avião invisível.
+    tl.set(air, { x: OFFSCREEN_RIGHT, y: BASE_Y, rotation: 0 })
   } else {
-    // Último destino: a foto FICA. Apagá-la aqui era o que abria a tela preta
-    // entre a última viagem e o CTA — quem a cobre é o painel próprio da
-    // seção final, que entra por cima no scroll seguinte. E nada de reset:
-    // a jornada é linear, não volta ao primeiro país.
-    tl.to({}, { duration: 0.15 })
+    // Último destino: a foto fica; quem a cobre é o painel da seção final.
+    tl.to({}, { duration: FADE_PORTION })
   }
 }
 
 /**
  * @param {object[]} destinations
- * @param {HTMLElement[]} layers  uma camada de fundo por destino, empilhadas
+ * @param {HTMLElement[]} layers  uma camada de fundo por destino
  * @param {boolean} mobile
  */
 export function buildMasterTimeline(destinations, layers, mobile = false) {
   const tl = gsap.timeline({ defaults: { ease: 'none' } })
+  const lift = mobile ? 0.6 : 1
 
-  // Estado de partida: primeiro fundo visível, avião fora à direita.
   tl.set(layers[0], { opacity: 1, scale: 1 })
   tl.set(layers.slice(1), { opacity: 0, scale: 1.03 })
-  tl.set(flight.air, { z: OFFSCREEN_RIGHT, y: BASE_Y, pitch: 0, loopAngle: 0 })
 
   destinations.forEach((d, i) => {
-    addSegment(tl, {
-      loop: !!d.loop,
-      current: layers[i],
-      next: layers[i + 1],
-      mobile,
-    })
+    addSegment(tl, { loop: !!d.loop, current: layers[i], next: layers[i + 1], lift })
   })
 
   return tl
 }
 
-/**
- * Pouso do fecho — timeline própria, também scrubbed, sem relação com a dos
- * destinos. Entra pela direita mais alto, desce na diagonal e nivela.
- */
+/** Pouso do fecho — curva própria, também scrubbed. */
 export function buildLandingTimeline(mobile = false) {
-  const air = flight.air
   const lift = mobile ? 0.6 : 1
   const tl = gsap.timeline({ defaults: { ease: 'none' } })
 
-  tl.set(air, { z: OFFSCREEN_RIGHT, y: BASE_Y + 6 * lift, pitch: -0.07, loopAngle: 0 })
-  tl.to(air, { z: -9, y: BASE_Y + 2.2 * lift, pitch: -0.045, duration: 0.45 })
-  tl.to(air, { z: 0, y: BASE_Y - 1.5, pitch: 0, duration: 0.55 })
+  tl.set(flight.air, { x: OFFSCREEN_RIGHT, y: BASE_Y + 6 * lift, rotation: 0 })
+  tl.to(flight.air, {
+    motionPath: {
+      path: [
+        { x: OFFSCREEN_RIGHT, y: BASE_Y + 6 * lift },
+        { x: -16, y: BASE_Y + 3.4 * lift },
+        { x: -6, y: BASE_Y + 0.6 },
+        { x: 0, y: BASE_Y - 1.5 },
+      ],
+      curviness: 1.2,
+      autoRotate: true,
+    },
+    duration: 1,
+  })
 
   return tl
 }
-
-export { LOOP_R }

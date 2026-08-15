@@ -10,8 +10,7 @@ import { motionSafe } from '../lib/env'
 /** Rumo do sobrevoo no modo destino: reto, para −Z. */
 const FORWARD = new THREE.Vector3(0, 0, -1)
 
-/** Raio do laço de 360°. */
-const LOOP_R = 7
+const DEG = Math.PI / 180
 
 /**
  * Orientação do aviao.glb, apurada lendo o binário (ver a análise em
@@ -220,13 +219,14 @@ export default function Aircraft({ url }) {
     const rig = Math.max(db, pb)
     if (rig > 0.001) {
       const a = flight.air
-      const arcY = LOOP_R * (1 - Math.cos(a.loopAngle))
-      const arcZ = -LOOP_R * Math.sin(a.loopAngle)
 
       fx = lerp(px, 0, rig)
-      fy = lerp(py, a.y + arcY, rig)
-      fz = lerp(pz, a.z + arcZ, rig)
-      loopAngle = (a.pitch + a.loopAngle) * rig
+      fy = lerp(py, a.y, rig)
+      // `x` da curva é a posição ao longo da tela, que nesta câmera é o Z.
+      fz = lerp(pz, a.x, rig)
+      // A tangente da curva vira arfagem. Sinal invertido porque o `rotation`
+      // do MotionPath é horário na tela e o rotateX positivo levanta o nariz.
+      loopAngle = -a.rotation * DEG * rig
       tmp.forward.lerp(FORWARD, rig).normalize()
       smooth.current.bank *= 1 - rig
     }

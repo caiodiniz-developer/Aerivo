@@ -40,12 +40,16 @@ export function initSmoothScroll() {
   if (lenis) return lenis
 
   lenis = new Lenis({
-    // Sem suavização quando o usuário pediu menos movimento: o scroll vira nativo.
-    lerp: reducedMotion ? 1 : 0.085,
+    // `duration` em vez de `lerp`: dá um perfil de desaceleração constante
+    // entre os deltas da roda, que é o que apaga o "tac… tac…" do mouse.
+    duration: 1,
     smoothWheel: !reducedMotion,
+    // Sem suavização quando o usuário pediu menos movimento: scroll nativo.
+    ...(reducedMotion ? { duration: 0, smoothWheel: false } : null),
+    // Touch fica nativo: suavizar o dedo deixa a página com sensação pesada.
     syncTouch: false,
-    wheelMultiplier: 1,
-    touchMultiplier: 1.6,
+    wheelMultiplier: 0.9,
+    touchMultiplier: 1,
   })
 
   lenis.on('scroll', ScrollTrigger.update)

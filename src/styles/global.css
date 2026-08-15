@@ -57,6 +57,29 @@ html.is-locked body {
   overflow: hidden;
 }
 
+/* CSS oficial do Lenis (v1.3). Sem ele o smooth do navegador briga com o do
+   Lenis e o `scrollTo` das âncoras fica com dois motores ao mesmo tempo. */
+html.lenis,
+html.lenis body {
+  height: auto;
+}
+
+.lenis.lenis-smooth {
+  scroll-behavior: auto !important;
+}
+
+.lenis.lenis-smooth [data-lenis-prevent] {
+  overscroll-behavior: contain;
+}
+
+.lenis.lenis-stopped {
+  overflow: hidden;
+}
+
+.lenis.lenis-smooth iframe {
+  pointer-events: none;
+}
+
 body {
   font-family: var(--font-ui);
   font-weight: 300;
