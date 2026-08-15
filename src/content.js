@@ -55,8 +55,7 @@ export const chapters = {
 
 /**
  * A foto é o fundo da cena; o avião 3D voa por cima dela.
- * `loop: true` marca os lugares onde ele dá o giro de 360° no meio da
- * travessia — em todos ficaria repetitivo, e o giro perde a graça.
+ * A travessia é igual em todos: reta, da direita para a esquerda.
  */
 export const destinations = [
   {
@@ -66,7 +65,6 @@ export const destinations = [
     time: '11h 25',
     landmark: 'O Coliseu',
     photo: '/media/coliseu.jpg',
-    loop: true,
     basePrice: 5180,
   },
   {
@@ -76,7 +74,6 @@ export const destinations = [
     time: '24h 15',
     landmark: 'A Torre de Tóquio, com o Fuji ao fundo',
     photo: '/media/torre%20de%20toquio.jpg',
-    loop: true,
     basePrice: 8740,
   },
   {
@@ -86,7 +83,6 @@ export const destinations = [
     time: '01h 05',
     landmark: 'O Cristo e o Pão de Açúcar',
     photo: '/media/cristo%20redentor.jpg',
-    loop: true,
     basePrice: 1240,
   },
   {

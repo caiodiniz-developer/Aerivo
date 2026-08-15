@@ -50,10 +50,11 @@ const DEST_TARGET = new THREE.Vector3(0, 6, 0)
 
 /** Fecho: avião parado, de perfil, logo abaixo do botão. */
 const PARK_SHOT = { pos: new THREE.Vector3(34, 6, 0), fov: 26 }
-/* Mira ~2,5 unidades acima do ponto de pouso (y=6). A 34 de distância com fov
-   26, a meia-altura visível é ~7,85 — esse deslocamento joga o avião cerca de
-   140px abaixo do centro, que é onde ele encosta logo abaixo do botão. */
-const PARK_TARGET = new THREE.Vector3(0, 8.6, 0)
+/* A linha de voo é fixa em y=7,5 e a mira fica 1,5 acima dela. A 34 de
+   distância com fov 26 a meia-altura visível é ~7,85 unidades para 450px, ou
+   seja ~86px por 1,5 — o avião assenta esse tanto abaixo do centro do quadro,
+   que é onde cai a folga de ~60px sob o botão. */
+const PARK_TARGET = new THREE.Vector3(0, 9, 0)
 
 /** Proporção em que os planos foram compostos. */
 const REF_ASPECT = 16 / 9

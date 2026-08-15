@@ -10,7 +10,6 @@ import { motionSafe } from '../lib/env'
 /** Rumo do sobrevoo no modo destino: reto, para −Z. */
 const FORWARD = new THREE.Vector3(0, 0, -1)
 
-const DEG = Math.PI / 180
 
 /**
  * Orientação do aviao.glb, apurada lendo o binário (ver a análise em
@@ -211,22 +210,17 @@ export default function Aircraft({ url }) {
     let fx = px
     let fy = py
     let fz = pz
-    let loopAngle = 0
 
-    // Destinos e pouso partilham a mesma pose, escrita por uma timeline. O
-    // laço soma um arco por cima da trajetória-base: assim o giro acontece
-    // *durante* o deslocamento, e não com o avião parado girando no lugar.
+    // Destinos e pouso partilham a mesma pose, escrita pela timeline do
+    // scroll. Travessia reta: nivelado, sem arfagem e sem inclinação.
     const rig = Math.max(db, pb)
     if (rig > 0.001) {
       const a = flight.air
 
       fx = lerp(px, 0, rig)
       fy = lerp(py, a.y, rig)
-      // `x` da curva é a posição ao longo da tela, que nesta câmera é o Z.
+      // `x` da travessia é a posição ao longo da tela, que nesta câmera é o Z.
       fz = lerp(pz, a.x, rig)
-      // A tangente da curva vira arfagem. Sinal invertido porque o `rotation`
-      // do MotionPath é horário na tela e o rotateX positivo levanta o nariz.
-      loopAngle = -a.rotation * DEG * rig
       tmp.forward.lerp(FORWARD, rig).normalize()
       smooth.current.bank *= 1 - rig
     }
@@ -237,7 +231,9 @@ export default function Aircraft({ url }) {
     // contaria a subida duas vezes. Só sobra a respiração.
     d.lookAt(fx + tmp.forward.x, fy + tmp.forward.y, fz + tmp.forward.z)
     d.rotateZ(smooth.current.bank)
-    d.rotateX((motionSafe ? Math.sin(t * 0.5) * 0.014 : 0) + loopAngle)
+    // A respiração é por tempo, não por scroll: nos trechos de travessia ela
+    // sai de cena, senão o avião continuaria oscilando com a página parada.
+    d.rotateX(motionSafe ? Math.sin(t * 0.5) * 0.014 * (1 - rig) : 0)
     d.updateMatrixWorld(true)
 
     g.position.copy(d.position)

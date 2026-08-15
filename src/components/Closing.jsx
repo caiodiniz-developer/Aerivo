@@ -43,7 +43,7 @@ export default function Closing() {
           end: 'top 20%',
           scrub: 0.1,
           invalidateOnRefresh: true,
-          animation: buildLandingTimeline(mobile),
+          animation: buildLandingTimeline(),
           onUpdate: (self) => (progress.parkBlend = clamp(self.progress / 0.2)),
           onLeaveBack: () => (progress.parkBlend = 0),
         })

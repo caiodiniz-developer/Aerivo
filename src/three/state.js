@@ -45,12 +45,9 @@ export const flight = {
    * então nunca há duas animações disputando a mesma pose.
    *
    *   x  −34 fora à direita  →  +34 fora à esquerda
-   *   y  altitude
-   *   rotation  graus, escrito pelo `autoRotate` do MotionPath
+   *   y  altitude, constante durante a travessia
    */
-  air: { x: -34, y: 7.5, rotation: 0 },
-  /** 0→1 dentro do destino ativo (só para leitura externa). */
-  crossU: 0,
+  air: { x: -34, y: 7.5 },
   /** 0→1: o avião estacionando de lado, no fecho da página. */
   parkBlend: 0,
 }

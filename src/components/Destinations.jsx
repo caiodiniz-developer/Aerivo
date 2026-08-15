@@ -51,7 +51,7 @@ export default function Destinations() {
         const layers = Array.from(document.querySelectorAll('.backdrop__layer'))
         if (!layers.length) return
 
-        const master = buildMasterTimeline(destinations, layers, mobile)
+        const master = buildMasterTimeline(destinations, layers)
 
         const st = ScrollTrigger.create({
           trigger: stage.current,
