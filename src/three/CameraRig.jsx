@@ -50,6 +50,13 @@ const DEST_SHOT = {
   fov: 30,
 }
 
+/** Fecho: avião parado, de perfil, abaixo do centro do quadro. */
+const PARK_SHOT = {
+  pos: new THREE.Vector3(34, 4, 0),
+  look: new THREE.Vector3(0, 4.6, 0),
+  fov: 26,
+}
+
 /** Proporção em que os planos foram compostos. */
 const REF_ASPECT = 16 / 9
 
@@ -107,13 +114,22 @@ export default function CameraRig() {
       tmp.offset.lerp(DEST_SHOT.look, db)
     }
 
+    // Fecho: mesmo perfil lateral, mas a mira sobe para o avião assentar
+    // abaixo do centro — logo abaixo do botão.
+    const pb = flight.parkBlend
+    if (pb > 0.001) {
+      tmp.pos.lerp(PARK_SHOT.pos, pb)
+      tmp.offset.lerp(PARK_SHOT.look, pb)
+    }
+
     // Correção de proporção. Numa tela em pé o campo horizontal encolhe muito;
     // com os mesmos números do 16:9 o avião simplesmente sai de quadro pela
     // lateral. Em tela estreita: abre o campo, afasta a câmera e reduz o
     // deslocamento lateral do enquadramento.
     const narrow = clamp((REF_ASPECT - camera.aspect) / (REF_ASPECT - 0.5))
     const shotFov = a.fov + (b.fov - a.fov) * k
-    const fov = shotFov * (1 - db) + DEST_SHOT.fov * db + narrow * 18
+    const blended = shotFov * (1 - db) + DEST_SHOT.fov * db
+    const fov = blended * (1 - pb) + PARK_SHOT.fov * pb + narrow * 18
     const pullBack = 1 + narrow * 0.45
     tmp.offset.x *= 1 - narrow * 0.72
     tmp.pos.multiplyScalar(pullBack)

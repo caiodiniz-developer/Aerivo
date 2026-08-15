@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { ScrollTrigger } from './lib/scroll'
 import Preloader from './components/Preloader'
+import StageBackdrop from './components/StageBackdrop'
 import { Nav, ProgressRail, FilmGrain } from './components/Chrome'
 import VideoStage from './components/VideoStage'
 import SkyStage from './components/SkyStage'
@@ -37,6 +38,8 @@ export default function App() {
       {/* O preloader roda sempre: é ele que dispara `ready`, e sem ele nem o
           scrub nem a cena 3D chegavam a montar. */}
       <Preloader onReady={onReady} />
+      {/* Fica abaixo do canvas 3D (z-index 0 contra 1): o avião voa sobre a foto. */}
+      <StageBackdrop />
       <Nav />
       <ProgressRail />
 

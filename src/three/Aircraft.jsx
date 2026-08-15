@@ -4,11 +4,17 @@ import { useGLTF } from '@react-three/drei'
 import * as THREE from 'three'
 import { flight, plane, TRAVEL } from './state'
 import { getGlowTexture } from './puffTexture'
-import { band, clamp, damp, lerp } from '../lib/math'
+import { band, clamp, damp, lerp, smoothstep } from '../lib/math'
 import { motionSafe } from '../lib/env'
 
 /** Rumo do sobrevoo no modo destino: reto, para −Z. */
 const FORWARD = new THREE.Vector3(0, 0, -1)
+
+/** Meia-travessia. Além de ~23 unidades o avião já está fora de quadro. */
+const CROSS_SPAN = 30
+
+/** Raio do laço de 360°. */
+const LOOP_R = 7
 
 /**
  * Orientação do aviao.glb, apurada lendo o binário (ver a análise em
@@ -205,22 +211,45 @@ export default function Aircraft({ url }) {
     // no rumo do monumento. A mistura é gradual, então a transição entre a
     // narrativa do céu e o trecho dos destinos não tem corte.
     const db = flight.destBlend
+    const pb = flight.parkBlend
     let fx = px
     let fy = py
     let fz = pz
+    let loopAngle = 0
+
     if (db > 0.001) {
+      const u = flight.crossU
+      // A câmera lateral olha de +X, então −Z cai à direita da tela: z subindo
+      // leva o avião da direita para a esquerda. Fora de ±26 ele já saiu de
+      // quadro, e é aí que a foto troca.
+      let cz = lerp(-CROSS_SPAN, CROSS_SPAN, u)
+      let cy = 0
+
+      // Giro de 360°: o avião descreve um laço vertical no meio da travessia.
+      // A posição acompanha a atitude, senão ele giraria em torno de si mesmo
+      // parado no ar em vez de fazer o laço.
+      if (flight.loopThisPass) {
+        const t01 = smoothstep(0.34, 0.66, u)
+        loopAngle = t01 * Math.PI * 2
+        cy = LOOP_R * (1 - Math.cos(loopAngle))
+        cz -= LOOP_R * Math.sin(loopAngle)
+      }
+
       fx = lerp(px, 0, db)
-      // Alto o bastante para cruzar acima de qualquer silhueta: os monumentos
-      // ocupam a faixa de baixo do quadro, e o avião passando atrás deles
-      // simplesmente desaparecia.
-      fy = lerp(py, 11, db)
-      // ±30 e não mais: a câmera do plano de destino enquadra cerca de 19
-      // unidades para cada lado, então uma travessia mais larga deixaria o
-      // avião fora de quadro na maior parte do scroll daquele destino.
-      fz = lerp(pz, lerp(30, -30, clamp(flight.destU)), db)
-      // Asas niveladas e nariz reto: é um sobrevoo, não uma manobra.
+      fy = lerp(py, 6 + cy, db)
+      fz = lerp(pz, cz, db)
       tmp.forward.lerp(FORWARD, db).normalize()
       smooth.current.bank *= 1 - db
+    }
+
+    // Fecho: o avião encosta e fica parado, de lado, logo abaixo do botão.
+    if (pb > 0.001) {
+      fx = lerp(fx, 0, pb)
+      fy = lerp(fy, 0, pb)
+      fz = lerp(fz, 0, pb)
+      loopAngle *= 1 - pb
+      tmp.forward.lerp(FORWARD, pb).normalize()
+      smooth.current.bank *= 1 - pb
     }
 
     const d = tmp.dummy
@@ -229,7 +258,7 @@ export default function Aircraft({ url }) {
     // contaria a subida duas vezes. Só sobra a respiração.
     d.lookAt(fx + tmp.forward.x, fy + tmp.forward.y, fz + tmp.forward.z)
     d.rotateZ(smooth.current.bank)
-    d.rotateX(motionSafe ? Math.sin(t * 0.5) * 0.014 : 0)
+    d.rotateX((motionSafe ? Math.sin(t * 0.5) * 0.014 : 0) + loopAngle)
     d.updateMatrixWorld(true)
 
     g.position.copy(d.position)

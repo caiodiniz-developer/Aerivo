@@ -37,8 +37,16 @@ export const flight = {
 
   /** 0→1: o quanto a cena já virou "modo destino" (paleta + enquadramento). */
   destBlend: 0,
-  /** 0→1 dentro do destino ativo — leva o avião de um lado ao outro do quadro. */
-  destU: 0,
+  /**
+   * Travessia dos destinos: `crossU` vai de 0 a 1 e reinicia, levando o avião
+   * da direita para a esquerda; a cada volta `crossCount` sobe, e é isso que
+   * dispara a troca da foto de fundo. Contínuo no tempo, não no scroll — a
+   * cena tem de estar viva mesmo com a página parada.
+   */
+  crossU: 0,
+  crossCount: 0,
+  /** 0→1: o avião estacionando de lado, no fecho da página. */
+  parkBlend: 0,
 }
 
 /**

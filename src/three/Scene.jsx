@@ -15,6 +15,41 @@ import Aircraft from './Aircraft'
 import Contrail from './Contrail'
 import CameraRig from './CameraRig'
 
+/** Segundos de uma travessia completa, de fora a fora da tela. */
+const CROSS_SECONDS = 9
+
+/** Luz de hora dourada usada nos trechos em que o fundo é foto. */
+const LIT_SUN = new THREE.Color('#ffd9a8')
+const LIT_SKY = new THREE.Color('#6f93c4')
+const LIT_GROUND = new THREE.Color('#3a3244')
+const LIT_DIR = new THREE.Vector3(0.62, 0.46, 0.28).normalize()
+
+/**
+ * No trecho de destinos e no fecho, o fundo é a foto (ou o preto da página),
+ * não o céu 3D. Estes objetos saem da câmera principal mas continuam na
+ * camada do cubemap, então o avião não perde os reflexos.
+ */
+function WorldVisibility({ groupRef }) {
+  const hidden = useRef(null)
+
+  useFrame(() => {
+    const group = groupRef.current
+    if (!group) return
+    const want = flight.destBlend > 0.5 || flight.parkBlend > 0.5
+    if (hidden.current === want) return
+    hidden.current = want
+
+    group.traverse((o) => {
+      // Guarda a máscara original na primeira passada: cada objeto tem a sua
+      // (o domo e o mar de nuvens entram no cubemap, a camada do meio não).
+      if (o.userData.baseMask === undefined) o.userData.baseMask = o.layers.mask
+      o.layers.mask = want ? 1 << ENV_LAYER : o.userData.baseMask
+    })
+  }, -30)
+
+  return null
+}
+
 /**
  * Escreve o estado do frame antes de qualquer outro `useFrame`.
  * Prioridade −100: todo o resto lê valores já resolvidos deste frame.
@@ -44,22 +79,31 @@ function Driver() {
     // avião continua voando no céu de verdade — o monumento é só a silhueta
     // em primeiro plano, por cima do canvas.
     flight.destBlend = damp(flight.destBlend, progress.destBlend, 0.09, d)
-    flight.destU = progress.dest
-    const b = flight.destBlend
-    if (b > 0.001 && progress.destSky) {
-      const [top, mid, horizon] = progress.destSky
+    flight.parkBlend = damp(flight.parkBlend, progress.parkBlend, 0.07, d)
+
+    // Luz dos trechos com foto. Sem isto o avião herda a paleta da noite —
+    // que é onde o scroll está quando chega aqui — e sai um recorte preto
+    // sobre um pôr do sol. O sol vem de +X, o lado que a câmera enxerga.
+    const lit = Math.max(flight.destBlend, flight.parkBlend)
+    if (lit > 0.001) {
       const s = flight.sky
-      s.top.lerp(top, b)
-      s.mid.lerp(mid, b)
-      s.horizon.lerp(horizon, b)
-      s.sun.lerp(horizon, b)
-      s.cloudLight.lerp(horizon, b * 0.9)
-      s.cloudDark.lerp(mid, b)
-      s.fog.lerp(horizon, b * 0.7)
-      // Nada de estrelas nem luzes de cidade sobre um céu de fim de tarde.
-      s.stars *= 1 - b
-      s.city *= 1 - b
-      s.sunPower = s.sunPower * (1 - b) + 1.5 * b
+      s.sun.lerp(LIT_SUN, lit)
+      s.mid.lerp(LIT_SKY, lit)
+      s.cloudDark.lerp(LIT_GROUND, lit)
+      s.sunPower = s.sunPower * (1 - lit) + 1.35 * lit
+      s.stars *= 1 - lit
+      s.city *= 1 - lit
+      s.sunDir.lerp(LIT_DIR, lit).normalize()
+    }
+
+    // Relógio da travessia. Só corre quando o trecho está em cena, para o
+    // avião não chegar já no meio de uma passagem.
+    if (flight.destBlend > 0.02) {
+      flight.crossU += d / CROSS_SECONDS
+      while (flight.crossU >= 1) {
+        flight.crossU -= 1
+        flight.crossCount++
+      }
     }
 
     gl.toneMappingExposure = flight.sky.exposure
@@ -182,6 +226,7 @@ function SunGlare() {
 export default function Scene({ modelUrl }) {
   const q = quality
   const heavy = tier !== 'low'
+  const world = useRef(null)
 
   return (
     <>
@@ -191,6 +236,11 @@ export default function Scene({ modelUrl }) {
       <CameraRig />
       <Lights />
       <SkyEnvironment every={tier === 'high' ? 8 : 16} />
+      <WorldVisibility groupRef={world} />
+
+      {/* Tudo que é "mundo" fica junto: nos destinos e no fecho este grupo sai
+          da câmera principal e o fundo passa a ser a foto / o preto da página. */}
+      <group ref={world}>
       <SkyDome />
       <SunGlare />
       <Starfield count={q.stars} />
@@ -260,7 +310,8 @@ export default function Scene({ modelUrl }) {
         inEnvMap={false}
       />
 
-      <CityLights count={q.cityLights} />
+        <CityLights count={q.cityLights} />
+      </group>
 
       <Suspense fallback={null}>
         <Aircraft url={modelUrl} />

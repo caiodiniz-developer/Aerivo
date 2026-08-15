@@ -1,12 +1,29 @@
 import { useLayoutEffect, useRef } from 'react'
 import gsap from 'gsap'
+import { ScrollTrigger, progress } from '../lib/scroll'
 import { splitLines, within, hidden, shown, revealDuration, useResizeKey } from '../lib/split'
 import { motionSafe } from '../lib/env'
+import { clamp } from '../lib/math'
 import { closing, brand } from '../content'
 
 export default function Closing() {
   const root = useRef(null)
   const resizeKey = useResizeKey()
+
+  // O avião estaciona de lado sob o botão enquanto o fecho está em cena.
+  useLayoutEffect(() => {
+    const st = ScrollTrigger.create({
+      trigger: root.current,
+      start: 'top bottom-=20%',
+      end: 'bottom bottom',
+      onUpdate: (self) => (progress.parkBlend = clamp(self.progress / 0.35)),
+      onLeaveBack: () => (progress.parkBlend = 0),
+    })
+    return () => {
+      st.kill()
+      progress.parkBlend = 0
+    }
+  }, [])
 
   useLayoutEffect(() => {
     const scope = root.current

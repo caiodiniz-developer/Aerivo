@@ -24,8 +24,8 @@ export const progress = {
    */
   destBlend: 0,
   dest: 0,
-  /** Cores [topo, meio, horizonte] do destino ativo, interpoladas. */
-  destSky: null,
+  /** 0→1 no fecho: o avião estaciona de lado sob o botão. */
+  parkBlend: 0,
   /** 0→1 na página toda. */
   page: 0,
   /** Ponteiro normalizado (-1..1) para parallax. */

@@ -54,10 +54,9 @@ export const chapters = {
 }
 
 /**
- * Cada destino carrega o que a cena de 5s precisa: o monumento que o avião
- * cruza, a paleta daquele céu e o preço-base. As silhuetas em si estão em
- * `src/components/landmarks.jsx` — são desenhadas em SVG, sem imagem para
- * baixar, o que também mantém tudo na mesma linguagem gráfica do site.
+ * A foto é o fundo da cena; o avião 3D voa por cima dela.
+ * `loop: true` marca os lugares onde ele dá o giro de 360° no meio da
+ * travessia — em todos ficaria repetitivo, e o giro perde a graça.
  */
 export const destinations = [
   {
@@ -66,9 +65,7 @@ export const destinations = [
     code: 'FCO',
     time: '11h 25',
     landmark: 'O Coliseu',
-    monument: 'italia',
-    // topo do céu, meio, horizonte — vira a paleta da cena 3D naquele trecho
-    sky: ['#1a2340', '#9c5f57', '#f0b073'],
+    photo: '/media/coliseu.jpg',
     basePrice: 5180,
   },
   {
@@ -77,8 +74,8 @@ export const destinations = [
     code: 'HND',
     time: '24h 15',
     landmark: 'A Torre de Tóquio, com o Fuji ao fundo',
-    monument: 'japao',
-    sky: ['#221f3c', '#7b4b6e', '#f2a6a6'],
+    photo: '/media/torre%20de%20toquio.jpg',
+    loop: true,
     basePrice: 8740,
   },
   {
@@ -87,8 +84,7 @@ export const destinations = [
     code: 'GIG',
     time: '01h 05',
     landmark: 'O Cristo e o Pão de Açúcar',
-    monument: 'brasil',
-    sky: ['#10324a', '#2f8f8a', '#f5c96b'],
+    photo: '/media/cristo%20redentor.jpg',
     basePrice: 1240,
   },
   {
@@ -97,8 +93,8 @@ export const destinations = [
     code: 'EZE',
     time: '03h 10',
     landmark: 'O Obelisco',
-    monument: 'argentina',
-    sky: ['#14294d', '#5b86b5', '#dfe8f0'],
+    photo: '/media/obelisco.jpg',
+    loop: true,
     basePrice: 1890,
   },
   {
@@ -107,8 +103,7 @@ export const destinations = [
     code: 'BCN',
     time: '10h 45',
     landmark: 'A Sagrada Família',
-    monument: 'espanha',
-    sky: ['#221a3d', '#a8524f', '#f4a259'],
+    photo: '/media/sagrada%20familia.jpg',
     basePrice: 4720,
   },
   {
@@ -117,8 +112,8 @@ export const destinations = [
     code: 'MEX',
     time: '10h 20',
     landmark: 'Chichén Itzá',
-    monument: 'mexico',
-    sky: ['#132b3a', '#3f7d6a', '#e9b872'],
+    photo: '/media/chicen%20itza.jpg',
+    loop: true,
     basePrice: 3960,
   },
 ]

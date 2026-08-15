@@ -30,8 +30,8 @@ export default function SkyStage({ ready, modelUrl }) {
         start: 'top bottom+=100%',
         // Vai até o fim dos destinos: o loop de render precisa continuar
         // rodando enquanto o avião cruza a cena de cada lugar.
-        endTrigger: '#destinos',
-        end: 'bottom top-=50%',
+        endTrigger: '#reservar',
+        end: 'bottom top',
         onToggle: (self) => setLive(self.isActive),
       }),
     )
@@ -59,11 +59,13 @@ export default function SkyStage({ ready, modelUrl }) {
       // A cena não se apaga no fim do trilho 3D: ela segue viva por baixo do
       // trecho de destinos, que é onde o avião entra na cena de cada lugar.
       // Só depois dali é que o canvas sai.
-      const exit = document.querySelector('#destinos') ?? track.current
+      // A cena segue viva até o fim da página: é no fecho que o avião
+      // estaciona de lado sob o botão.
+      const exit = document.querySelector('#reservar') ?? track.current
       gsap.to(canvas.current, {
         opacity: 0,
         ease: 'none',
-        scrollTrigger: { trigger: exit, start: 'bottom 90%', end: 'bottom 45%', scrub: true },
+        scrollTrigger: { trigger: exit, start: 'bottom 60%', end: 'bottom 20%', scrub: true },
       })
       // O HUD, sim, some junto com a narrativa de altitude.
       gsap.to('.hud', {
@@ -110,7 +112,9 @@ export default function SkyStage({ ready, modelUrl }) {
             frameloop={live ? 'always' : 'never'}
             gl={{
               antialias: true,
-              alpha: false,
+              // Alpha ligado: nos destinos e no fecho o céu 3D sai de cena e o
+              // fundo passa a ser a foto, atrás do canvas.
+              alpha: true,
               powerPreference: 'high-performance',
               stencil: false,
             }}
@@ -118,7 +122,7 @@ export default function SkyStage({ ready, modelUrl }) {
             onCreated={({ gl }) => {
               gl.toneMapping = THREE.ACESFilmicToneMapping
               gl.toneMappingExposure = 1
-              gl.setClearColor('#0b1220', 1)
+              gl.setClearAlpha(0)
             }}
           >
             <Suspense fallback={null}>

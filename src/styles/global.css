@@ -544,8 +544,9 @@ a {
   z-index: 1;
   opacity: 0;
   pointer-events: none;
-  /* Fundo pintado no CSS: cobre o gap de 1 frame antes do primeiro render do WebGL. */
-  background: #0b1220;
+  /* Sem fundo: o canvas é alpha e precisa deixar passar a foto do `.backdrop`,
+     que fica logo abaixo (z-index 0) e também cobre o gap do primeiro frame. */
+  background: transparent;
 }
 
 .sky-track {
@@ -815,33 +816,39 @@ a {
   align-content: center;
 }
 
-.dest-stage::before {
-  content: '';
-  position: absolute;
+/* Fundo de foto: fica ABAIXO do canvas 3D (z-index 0 contra 1), que é o que
+   põe o avião voando sobre a imagem em vez de atrás dela. */
+.backdrop {
+  position: fixed;
   inset: 0;
   z-index: 0;
   pointer-events: none;
+  background: var(--ink);
+}
+
+.backdrop__layer {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  background-position: center;
+  background-size: cover;
+  background-repeat: no-repeat;
+  will-change: opacity, transform;
+}
+
+.backdrop__scrim {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
   background:
     linear-gradient(
       90deg,
-      rgba(5, 7, 11, 0.92) 0%,
-      rgba(5, 7, 11, 0.6) 32%,
-      rgba(5, 7, 11, 0) 62%
+      rgba(5, 7, 11, 0.94) 0%,
+      rgba(5, 7, 11, 0.62) 34%,
+      rgba(5, 7, 11, 0.18) 68%
     ),
-    linear-gradient(0deg, rgba(5, 7, 11, 0.78), rgba(5, 7, 11, 0) 42%);
-}
-
-.dest-monument {
-  position: absolute;
-  inset: 0;
-  z-index: 1;
-  pointer-events: none;
-}
-
-.dest-monument svg {
-  display: block;
-  width: 100%;
-  height: 100%;
+    linear-gradient(0deg, rgba(5, 7, 11, 0.8), rgba(5, 7, 11, 0.05) 46%),
+    radial-gradient(120% 90% at 50% 50%, rgba(5, 7, 11, 0) 40%, rgba(5, 7, 11, 0.5) 100%);
 }
 
 .dest-inner {
@@ -873,10 +880,7 @@ a {
   grid-template-columns: 2.6rem 1fr auto;
   align-items: baseline;
   gap: clamp(0.7rem, 2vw, 1.4rem);
-  width: 100%;
   padding: clamp(0.35rem, 1.1vh, 0.7rem) 0;
-  text-align: left;
-  color: inherit;
 }
 
 .dest-row__index {
@@ -963,19 +967,19 @@ a {
    Fecho
    ------------------------------------------------------------ */
 
+/* Sem fundo próprio: o avião estaciona atrás do texto, e um fundo opaco aqui
+   o esconderia. O `--ink` do backdrop fixo é que fecha a cena.
+   O conteúdo sobe para o topo para abrir espaço embaixo do botão. */
 .closing {
   position: relative;
   z-index: 3;
   min-height: var(--vh);
   display: grid;
-  place-content: center;
+  align-content: start;
   justify-items: center;
   text-align: center;
-  gap: clamp(1.6rem, 4vw, 2.8rem);
-  padding: clamp(6rem, 14vh, 10rem) var(--gutter);
-  background:
-    radial-gradient(90% 70% at 50% 118%, rgba(233, 184, 114, 0.18), rgba(5, 7, 11, 0) 62%),
-    var(--ink);
+  gap: clamp(1.4rem, 3vw, 2.2rem);
+  padding: clamp(7rem, 18vh, 12rem) var(--gutter) clamp(6rem, 14vh, 9rem);
 }
 
 .cta {
