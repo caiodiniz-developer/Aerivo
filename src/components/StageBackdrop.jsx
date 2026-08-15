@@ -32,19 +32,27 @@ export default function StageBackdrop() {
       gsap.killTweensOf([next, prev])
       gsap.set(next, { zIndex: 2 })
       gsap.set(prev, { zIndex: 1 })
-      gsap.fromTo(
+
+      // A que entra sobe por cima da que sai, com um respiro de escala em
+      // sentidos opostos. Nunca passa pelo fundo da página no meio do
+      // caminho — é isso que evita o flash entre destinos.
+      const tl = gsap.timeline()
+      tl.fromTo(
         next,
-        { opacity: 0, scale: motionSafe ? 1.06 : 1 },
+        { opacity: 0, scale: motionSafe ? 1.05 : 1, filter: motionSafe ? 'blur(12px)' : 'none' },
         {
           opacity: 1,
           scale: 1,
-          duration: motionSafe ? 1.6 : 0.4,
+          filter: 'blur(0px)',
+          duration: motionSafe ? PHOTO_FADE : 0.35,
           ease: 'power2.inOut',
-          onComplete: () => {
-            if (prev) prev.style.opacity = '0'
-          },
         },
       )
+      if (prev && motionSafe) {
+        tl.to(prev, { scale: 1.04, duration: PHOTO_FADE, ease: 'power2.inOut' }, 0)
+      }
+      tl.set(prev, { opacity: 0, scale: 1, filter: 'blur(0px)' })
+
       front.current = 1 - front.current
     }
 
@@ -61,6 +69,9 @@ export default function StageBackdrop() {
   )
 }
 
-/** Troca a foto de fundo. Evento em vez de contexto: quem chama é um `useFrame`. */
+/** Duração do crossfade. O voo seguinte espera exatamente isto. */
+export const PHOTO_FADE = 1.1
+
+/** Troca a foto de fundo. Evento em vez de contexto: quem chama é uma timeline. */
 export const setBackdropPhoto = (src) =>
   window.dispatchEvent(new CustomEvent('aerivo:photo', { detail: src }))

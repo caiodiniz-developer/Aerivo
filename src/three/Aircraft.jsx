@@ -4,14 +4,11 @@ import { useGLTF } from '@react-three/drei'
 import * as THREE from 'three'
 import { flight, plane, TRAVEL } from './state'
 import { getGlowTexture } from './puffTexture'
-import { band, clamp, damp, lerp, smoothstep } from '../lib/math'
+import { band, clamp, damp, lerp } from '../lib/math'
 import { motionSafe } from '../lib/env'
 
 /** Rumo do sobrevoo no modo destino: reto, para −Z. */
 const FORWARD = new THREE.Vector3(0, 0, -1)
-
-/** Meia-travessia. Além de ~23 unidades o avião já está fora de quadro. */
-const CROSS_SPAN = 30
 
 /** Raio do laço de 360°. */
 const LOOP_R = 7
@@ -217,39 +214,21 @@ export default function Aircraft({ url }) {
     let fz = pz
     let loopAngle = 0
 
-    if (db > 0.001) {
-      const u = flight.crossU
-      // A câmera lateral olha de +X, então −Z cai à direita da tela: z subindo
-      // leva o avião da direita para a esquerda. Fora de ±26 ele já saiu de
-      // quadro, e é aí que a foto troca.
-      let cz = lerp(-CROSS_SPAN, CROSS_SPAN, u)
-      let cy = 0
+    // Destinos e pouso partilham a mesma pose, escrita por uma timeline. O
+    // laço soma um arco por cima da trajetória-base: assim o giro acontece
+    // *durante* o deslocamento, e não com o avião parado girando no lugar.
+    const rig = Math.max(db, pb)
+    if (rig > 0.001) {
+      const a = flight.air
+      const arcY = LOOP_R * (1 - Math.cos(a.loopAngle))
+      const arcZ = -LOOP_R * Math.sin(a.loopAngle)
 
-      // Giro de 360°: o avião descreve um laço vertical no meio da travessia.
-      // A posição acompanha a atitude, senão ele giraria em torno de si mesmo
-      // parado no ar em vez de fazer o laço.
-      if (flight.loopThisPass) {
-        const t01 = smoothstep(0.34, 0.66, u)
-        loopAngle = t01 * Math.PI * 2
-        cy = LOOP_R * (1 - Math.cos(loopAngle))
-        cz -= LOOP_R * Math.sin(loopAngle)
-      }
-
-      fx = lerp(px, 0, db)
-      fy = lerp(py, 6 + cy, db)
-      fz = lerp(pz, cz, db)
-      tmp.forward.lerp(FORWARD, db).normalize()
-      smooth.current.bank *= 1 - db
-    }
-
-    // Fecho: o avião encosta e fica parado, de lado, logo abaixo do botão.
-    if (pb > 0.001) {
-      fx = lerp(fx, 0, pb)
-      fy = lerp(fy, 0, pb)
-      fz = lerp(fz, 0, pb)
-      loopAngle *= 1 - pb
-      tmp.forward.lerp(FORWARD, pb).normalize()
-      smooth.current.bank *= 1 - pb
+      fx = lerp(px, 0, rig)
+      fy = lerp(py, a.y + arcY, rig)
+      fz = lerp(pz, a.z + arcZ, rig)
+      loopAngle = (a.pitch + a.loopAngle) * rig
+      tmp.forward.lerp(FORWARD, rig).normalize()
+      smooth.current.bank *= 1 - rig
     }
 
     const d = tmp.dummy

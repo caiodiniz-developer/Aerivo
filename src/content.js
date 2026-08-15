@@ -76,6 +76,7 @@ export const destinations = [
     time: '24h 15',
     landmark: 'A Torre de Tóquio, com o Fuji ao fundo',
     photo: '/media/torre%20de%20toquio.jpg',
+    loop: true,
     basePrice: 8740,
   },
   {
@@ -104,7 +105,6 @@ export const destinations = [
     time: '10h 45',
     landmark: 'A Sagrada Família',
     photo: '/media/sagrada%20familia.jpg',
-    loop: true,
     basePrice: 4720,
   },
   {

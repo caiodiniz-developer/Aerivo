@@ -4,23 +4,37 @@ import { ScrollTrigger, progress } from '../lib/scroll'
 import { splitLines, within, hidden, shown, revealDuration, useResizeKey } from '../lib/split'
 import { motionSafe } from '../lib/env'
 import { clamp } from '../lib/math'
+import { buildLanding } from '../lib/flight'
 import { closing, brand } from '../content'
 
 export default function Closing() {
   const root = useRef(null)
   const resizeKey = useResizeKey()
 
-  // O avião estaciona de lado sob o botão enquanto o fecho está em cena.
+  // O avião chega pela direita, desce na diagonal e para logo abaixo do
+  // botão. Uma vez só: aqui a jornada acaba, não repete.
   useLayoutEffect(() => {
+    let landing = null
+
     const st = ScrollTrigger.create({
       trigger: root.current,
-      start: 'top bottom-=20%',
+      start: 'top bottom-=25%',
       end: 'bottom bottom',
-      onUpdate: (self) => (progress.parkBlend = clamp(self.progress / 0.35)),
-      onLeaveBack: () => (progress.parkBlend = 0),
+      onUpdate: (self) => (progress.parkBlend = clamp(self.progress / 0.3)),
+      onEnter: () => {
+        landing?.kill()
+        landing = buildLanding()
+      },
+      onLeaveBack: () => {
+        progress.parkBlend = 0
+        landing?.kill()
+        landing = null
+      },
     })
+
     return () => {
       st.kill()
+      landing?.kill()
       progress.parkBlend = 0
     }
   }, [])

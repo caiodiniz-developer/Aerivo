@@ -41,21 +41,19 @@ const KEY_COUNT = SHOTS.length
  * para a direita, de perfil, indo na direção do monumento. A mira sobe um
  * pouco para o avião ficar no terço superior e deixar a silhueta livre.
  */
-const DEST_SHOT = {
-  pos: new THREE.Vector3(40, 13, 0),
-  // `look` é somado à posição do avião: mirar acima dele o joga para baixo na
-  // tela. Aqui a mira desce, então ele sobe para o terço superior — que é a
-  // faixa livre acima da silhueta do monumento.
-  look: new THREE.Vector3(0, -4, 0),
-  fov: 30,
-}
+const DEST_SHOT = { pos: new THREE.Vector3(40, 13, 0), fov: 30 }
 
-/** Fecho: avião parado, de perfil, abaixo do centro do quadro. */
-const PARK_SHOT = {
-  pos: new THREE.Vector3(34, 4, 0),
-  look: new THREE.Vector3(0, 4.6, 0),
-  fov: 26,
-}
+/** Ponto fixo de mira do trecho de destinos. A 40 unidades e fov 30, a
+ *  meia-largura visível é ~19 — daí as bordas da tela caírem em z ≈ ∓19 e o
+ *  avião nascer/morrer em ∓34, bem fora de quadro em qualquer proporção. */
+const DEST_TARGET = new THREE.Vector3(0, 6, 0)
+
+/** Fecho: avião parado, de perfil, logo abaixo do botão. */
+const PARK_SHOT = { pos: new THREE.Vector3(34, 6, 0), fov: 26 }
+/* Mira ~2,5 unidades acima do ponto de pouso (y=6). A 34 de distância com fov
+   26, a meia-altura visível é ~7,85 — esse deslocamento joga o avião cerca de
+   140px abaixo do centro, que é onde ele encosta logo abaixo do botão. */
+const PARK_TARGET = new THREE.Vector3(0, 8.6, 0)
 
 /** Proporção em que os planos foram compostos. */
 const REF_ASPECT = 16 / 9
@@ -109,18 +107,10 @@ export default function CameraRig() {
     // Modo destino: câmera perpendicular à rota, para o avião passar de
     // perfil — é assim que ele "entra" na cena do lugar.
     const db = flight.destBlend
-    if (db > 0.001) {
-      tmp.pos.lerp(DEST_SHOT.pos, db)
-      tmp.offset.lerp(DEST_SHOT.look, db)
-    }
+    if (db > 0.001) tmp.pos.lerp(DEST_SHOT.pos, db)
 
-    // Fecho: mesmo perfil lateral, mas a mira sobe para o avião assentar
-    // abaixo do centro — logo abaixo do botão.
     const pb = flight.parkBlend
-    if (pb > 0.001) {
-      tmp.pos.lerp(PARK_SHOT.pos, pb)
-      tmp.offset.lerp(PARK_SHOT.look, pb)
-    }
+    if (pb > 0.001) tmp.pos.lerp(PARK_SHOT.pos, pb)
 
     // Correção de proporção. Numa tela em pé o campo horizontal encolhe muito;
     // com os mesmos números do 16:9 o avião simplesmente sai de quadro pela
@@ -152,8 +142,14 @@ export default function CameraRig() {
       damp(camera.position.z, tmp.pos.z, 0.14, dt),
     )
 
-    // O alvo é o avião, não um ponto fixo — o enquadramento segue a manobra.
+    // No voo narrativo o alvo é o avião: o enquadramento segue a manobra.
     tmp.target.copy(plane.position).add(tmp.offset)
+
+    // Nos destinos e no pouso, NÃO. Aqui a câmera é fixa, e é isso que faz a
+    // travessia existir: mirando no avião, câmera e avião andavam juntos e ele
+    // ficava plantado no centro por mais que a posição mudasse.
+    const rig = Math.max(db, pb)
+    if (rig > 0.001) tmp.target.lerp(pb > db ? PARK_TARGET : DEST_TARGET, rig)
     tmp.look.lerp(tmp.target, 1 - Math.pow(0.001, dt))
     camera.lookAt(tmp.look)
 

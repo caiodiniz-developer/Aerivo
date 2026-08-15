@@ -38,12 +38,20 @@ export const flight = {
   /** 0→1: o quanto a cena já virou "modo destino" (paleta + enquadramento). */
   destBlend: 0,
   /**
-   * Travessia dos destinos, escrita pelo <Destinations/> a partir do scroll:
-   * `crossU` vai de 0 (direita da tela) a 1 (esquerda) dentro de cada destino.
-   * `loopThisPass` liga o giro de 360° naquela passagem.
+   * Pose do voo nos trechos de câmera fixa (destinos e pouso).
+   *
+   * É um objeto puro de propósito: quem escreve é uma timeline do GSAP, quem
+   * lê é o `useFrame` do avião. Uma timeline só é dona destes números por vez,
+   * então nunca há duas animações disputando a mesma pose.
+   *
+   *   z  −34 fora à direita  →  +34 fora à esquerda
+   *   y  altitude
+   *   pitch  radianos, positivo = nariz para cima
+   *   loopAngle  0→2π durante a manobra de 360°
    */
+  air: { z: -34, y: 8, pitch: 0, loopAngle: 0 },
+  /** 0→1 dentro do destino ativo (só para leitura externa). */
   crossU: 0,
-  loopThisPass: false,
   /** 0→1: o avião estacionando de lado, no fecho da página. */
   parkBlend: 0,
 }

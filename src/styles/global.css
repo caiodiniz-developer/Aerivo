@@ -970,16 +970,19 @@ a {
 /* Sem fundo próprio: o avião estaciona atrás do texto, e um fundo opaco aqui
    o esconderia. O `--ink` do backdrop fixo é que fecha a cena.
    O conteúdo sobe para o topo para abrir espaço embaixo do botão. */
+/* Sem fundo próprio: o avião pousa atrás do texto, e um fundo opaco aqui o
+   esconderia. Altura enxuta — o vão embaixo do botão é só o necessário para
+   o avião assentar logo abaixo do CTA, não meia tela vazia. */
 .closing {
   position: relative;
   z-index: 3;
-  min-height: var(--vh);
+  min-height: 78svh;
   display: grid;
   align-content: start;
   justify-items: center;
   text-align: center;
-  gap: clamp(1.4rem, 3vw, 2.2rem);
-  padding: clamp(7rem, 18vh, 12rem) var(--gutter) clamp(6rem, 14vh, 9rem);
+  gap: clamp(1.2rem, 2.6vw, 1.9rem);
+  padding: clamp(4.5rem, 11vh, 7rem) var(--gutter) clamp(11rem, 24vh, 16rem);
 }
 
 .cta {

@@ -5,8 +5,9 @@ import { splitLines, within, hidden, shown, revealDuration, useResizeKey } from 
 import { motionSafe } from '../lib/env'
 import { clamp } from '../lib/math'
 import { flight } from '../three/state'
+import { buildCrossing, releaseFlight, FlightState } from '../lib/flight'
 import { destinations } from '../content'
-import { setBackdropPhoto } from './StageBackdrop'
+import { setBackdropPhoto, PHOTO_FADE } from './StageBackdrop'
 
 const brl = new Intl.NumberFormat('pt-BR', {
   style: 'currency',
@@ -19,27 +20,35 @@ export default function Destinations() {
   const track = useRef(null)
   const resizeKey = useResizeKey()
   const [active, setActive] = useState(0)
+  const phase = useRef(FlightState.ENTERING)
 
-  /* ---------------- a travessia é o scroll ---------------- */
+  /* ---------------- o voo: uma timeline por travessia ---------------- */
   useLayoutEffect(() => {
-    // Um bloco de scroll por destino. Dentro de cada bloco o avião atravessa
-    // uma vez, da direita para a esquerda; ao virar o bloco, a foto troca.
-    const cross = ScrollTrigger.create({
-      trigger: track.current,
-      start: 'top top',
-      end: 'bottom bottom',
-      onUpdate: (self) => {
-        const total = self.progress * destinations.length
-        const i = clamp(Math.floor(total), 0, destinations.length - 1)
-        flight.crossU = clamp(total - i)
-        flight.loopThisPass = !!destinations[i].loop
-        // O React descarta o set quando o índice não muda, então isto não
-        // custa re-render por frame de scroll.
-        setActive(i)
-      },
-    })
+    let tl = null
+    let index = 0
+    let disposed = false
+    let onScreen = false
 
-    // Presença na cena 3D: entra antes da seção aparecer e sai depois dela.
+    const fly = () => {
+      if (disposed || !onScreen) return
+      tl = buildCrossing({
+        loop: !!destinations[index].loop,
+        onState: (s) => (phase.current = s),
+        onComplete: () => {
+          // Aqui o avião já está inteiramente fora de quadro pela esquerda.
+          // É o único ponto em que o destino muda.
+          phase.current = FlightState.CHANGING
+          index = (index + 1) % destinations.length
+          setActive(index)
+          // A próxima travessia espera a foto acabar de entrar.
+          gsap.delayedCall(PHOTO_FADE, fly)
+        },
+      })
+    }
+
+    // Presença na cena 3D. O voo só existe enquanto a seção está à vista:
+    // fora dela ele é encerrado por completo, para não disputar a pose com o
+    // pouso do fecho nem gastar frames fora de quadro.
     const blend = ScrollTrigger.create({
       trigger: track.current,
       start: 'top bottom-=10%',
@@ -48,13 +57,23 @@ export default function Destinations() {
         const p = self.progress
         progress.destBlend = clamp(Math.min(p / 0.1, (1 - p) / 0.1))
       },
+      onToggle: (self) => {
+        onScreen = self.isActive
+        if (onScreen) fly()
+        else {
+          tl = null
+          releaseFlight()
+        }
+      },
       onLeave: () => (progress.destBlend = 0),
       onLeaveBack: () => (progress.destBlend = 0),
     })
 
     ScrollTrigger.refresh()
     return () => {
-      cross.kill()
+      disposed = true
+      tl = null
+      releaseFlight()
       blend.kill()
       progress.destBlend = 0
     }
