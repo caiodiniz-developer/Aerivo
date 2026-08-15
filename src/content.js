@@ -53,14 +53,94 @@ export const chapters = {
   },
 }
 
+/**
+ * Cada destino carrega o que a cena de 5s precisa: o monumento que o avião
+ * cruza, a paleta daquele céu e o preço-base. As silhuetas em si estão em
+ * `src/components/landmarks.jsx` — são desenhadas em SVG, sem imagem para
+ * baixar, o que também mantém tudo na mesma linguagem gráfica do site.
+ */
 export const destinations = [
-  { name: 'Lisboa', code: 'LIS', time: '09h 40' },
-  { name: 'Tóquio', code: 'HND', time: '24h 15' },
-  { name: 'Cidade do Cabo', code: 'CPT', time: '11h 55' },
-  { name: 'Reykjavík', code: 'KEF', time: '10h 30' },
-  { name: 'Santiago', code: 'SCL', time: '04h 05' },
-  { name: 'Marrakech', code: 'RAK', time: '09h 20' },
+  {
+    name: 'Itália',
+    city: 'Roma',
+    code: 'FCO',
+    time: '11h 25',
+    landmark: 'O Coliseu',
+    monument: 'italia',
+    // topo do céu, meio, horizonte — vira a paleta da cena 3D naquele trecho
+    sky: ['#1a2340', '#9c5f57', '#f0b073'],
+    basePrice: 5180,
+  },
+  {
+    name: 'Japão',
+    city: 'Tóquio',
+    code: 'HND',
+    time: '24h 15',
+    landmark: 'A Torre de Tóquio, com o Fuji ao fundo',
+    monument: 'japao',
+    sky: ['#221f3c', '#7b4b6e', '#f2a6a6'],
+    basePrice: 8740,
+  },
+  {
+    name: 'Brasil',
+    city: 'Rio de Janeiro',
+    code: 'GIG',
+    time: '01h 05',
+    landmark: 'O Cristo e o Pão de Açúcar',
+    monument: 'brasil',
+    sky: ['#10324a', '#2f8f8a', '#f5c96b'],
+    basePrice: 1240,
+  },
+  {
+    name: 'Argentina',
+    city: 'Buenos Aires',
+    code: 'EZE',
+    time: '03h 10',
+    landmark: 'O Obelisco',
+    monument: 'argentina',
+    sky: ['#14294d', '#5b86b5', '#dfe8f0'],
+    basePrice: 1890,
+  },
+  {
+    name: 'Espanha',
+    city: 'Barcelona',
+    code: 'BCN',
+    time: '10h 45',
+    landmark: 'A Sagrada Família',
+    monument: 'espanha',
+    sky: ['#221a3d', '#a8524f', '#f4a259'],
+    basePrice: 4720,
+  },
+  {
+    name: 'México',
+    city: 'Yucatán',
+    code: 'MEX',
+    time: '10h 20',
+    landmark: 'Chichén Itzá',
+    monument: 'mexico',
+    sky: ['#132b3a', '#3f7d6a', '#e9b872'],
+    basePrice: 3960,
+  },
 ]
+
+/** Opções do painel de reserva. */
+export const booking = {
+  origins: [
+    { code: 'GRU', label: 'São Paulo — Guarulhos' },
+    { code: 'GIG', label: 'Rio de Janeiro — Galeão' },
+    { code: 'BSB', label: 'Brasília' },
+    { code: 'CNF', label: 'Belo Horizonte — Confins' },
+    { code: 'POA', label: 'Porto Alegre' },
+  ],
+  times: ['06:15', '10:40', '14:05', '19:30', '23:55'],
+  cabins: [
+    { id: 'economica', label: 'Econômica', multiplier: 1, note: 'Assento na janela garantido' },
+    { id: 'executiva', label: 'Executiva', multiplier: 2.4, note: 'Poltrona-leito e embarque prioritário' },
+    { id: 'primeira', label: 'Primeira', multiplier: 4.1, note: 'Suíte privativa com janela dupla' },
+  ],
+  cta: 'Quero viajar para esse lugar',
+  confirm: 'Confirmar reserva',
+}
 
 export const closing = {
   eyebrow: 'Última chamada',

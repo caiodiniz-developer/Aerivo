@@ -40,6 +40,28 @@ function Driver() {
 
     sampleSky(flight.p, flight.sky)
 
+    // Trecho dos destinos: a mesma cena 3D veste a paleta do lugar. Assim o
+    // avião continua voando no céu de verdade — o monumento é só a silhueta
+    // em primeiro plano, por cima do canvas.
+    flight.destBlend = damp(flight.destBlend, progress.destBlend, 0.09, d)
+    flight.destU = progress.dest
+    const b = flight.destBlend
+    if (b > 0.001 && progress.destSky) {
+      const [top, mid, horizon] = progress.destSky
+      const s = flight.sky
+      s.top.lerp(top, b)
+      s.mid.lerp(mid, b)
+      s.horizon.lerp(horizon, b)
+      s.sun.lerp(horizon, b)
+      s.cloudLight.lerp(horizon, b * 0.9)
+      s.cloudDark.lerp(mid, b)
+      s.fog.lerp(horizon, b * 0.7)
+      // Nada de estrelas nem luzes de cidade sobre um céu de fim de tarde.
+      s.stars *= 1 - b
+      s.city *= 1 - b
+      s.sunPower = s.sunPower * (1 - b) + 1.5 * b
+    }
+
     gl.toneMappingExposure = flight.sky.exposure
     if (scene.fog) {
       scene.fog.color.copy(flight.sky.fog)

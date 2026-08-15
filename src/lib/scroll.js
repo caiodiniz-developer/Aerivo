@@ -17,6 +17,15 @@ export const progress = {
   hero: 0,
   /** 0→1 ao longo do trilho 3D. */
   sky: 0,
+  /**
+   * Trecho dos destinos. `destBlend` diz o quanto a cena 3D já assumiu a
+   * paleta e o enquadramento daquele lugar; `dest` é o avanço dentro do
+   * destino ativo (0→1), que move o avião de um lado ao outro do quadro.
+   */
+  destBlend: 0,
+  dest: 0,
+  /** Cores [topo, meio, horizonte] do destino ativo, interpoladas. */
+  destSky: null,
   /** 0→1 na página toda. */
   page: 0,
   /** Ponteiro normalizado (-1..1) para parallax. */

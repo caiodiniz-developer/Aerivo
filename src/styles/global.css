@@ -13,7 +13,7 @@
   --gold-deep: #c98c3c;
   --sky: #7fb2e5;
 
-  --font-display: 'Instrument Serif', 'Iowan Old Style', Georgia, 'Times New Roman', serif;
+  --font-display: 'Playfair Display', 'Iowan Old Style', Georgia, 'Times New Roman', serif;
   --font-ui: 'Inter Tight', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
 
   --gutter: clamp(1.25rem, 4.5vw, 4.5rem);
@@ -127,22 +127,28 @@ a {
 
 .display {
   font-family: var(--font-display);
-  font-weight: 400;
-  line-height: 0.94;
-  letter-spacing: -0.02em;
+  font-weight: 700;
+  line-height: 0.98;
+  letter-spacing: -0.025em;
   text-wrap: balance;
 }
 
+/* Hero: o peso mais alto, e uma sombra larga e baixa que descola o texto do
+   frame do vídeo sem virar caixa preta. */
 .display--xl {
   font-size: clamp(2.9rem, 9vw, 9.5rem);
+  font-weight: 800;
+  text-shadow: 0 2px 60px rgba(5, 7, 11, 0.55), 0 1px 3px rgba(5, 7, 11, 0.35);
 }
 
 .display--l {
-  font-size: clamp(2.6rem, 8.2vw, 7.5rem);
+  font-size: clamp(2.6rem, 8vw, 7rem);
+  font-weight: 700;
 }
 
 .display--m {
   font-size: clamp(2rem, 5.2vw, 4.4rem);
+  font-weight: 700;
 }
 
 .display em {
@@ -779,91 +785,177 @@ a {
 }
 
 /* ------------------------------------------------------------
-   Destinos
+   Destinos — cena inline sobre o canvas 3D
    ------------------------------------------------------------ */
 
-.section {
+/*
+  Sem fundo próprio: este trecho é uma janela para a mesma cena 3D que roda no
+  resto do site. A pilha, de trás para frente, é
+
+    canvas WebGL (céu em movimento + avião)   z-index 1, fixo, fora daqui
+    véu de leitura                            .dest-stage::before
+    silhueta do monumento                     .dest-monument
+    texto                                     .dest-inner
+
+  O avião passa atrás do monumento, que é o que faz a cena ter profundidade
+  em vez de parecer um adesivo por cima do vídeo.
+*/
+
+.dest-track {
   position: relative;
   z-index: 3;
-  background: var(--ink);
-  padding: clamp(6rem, 16vh, 12rem) var(--gutter);
 }
 
-/* Mesma armadilha do `.hero__head`: `ch` aqui é medido na fonte de interface,
-   não no serif de display, e a caixa saía estreita demais para o título. */
-.section__head {
-  display: grid;
-  gap: 1.2rem;
-  max-width: min(72vw, 58rem);
-  margin-bottom: clamp(3rem, 8vh, 6rem);
-}
-
-.destinations {
-  border-top: 1px solid var(--line);
-}
-
-.dest {
-  position: relative;
-  display: grid;
-  grid-template-columns: 3.5rem 1fr auto auto;
-  align-items: center;
-  gap: clamp(0.8rem, 3vw, 2.5rem);
-  padding: clamp(1.4rem, 3.2vw, 2.4rem) 0;
-  border-bottom: 1px solid var(--line);
+.dest-stage {
+  position: sticky;
+  top: 0;
+  height: 100svh;
   overflow: hidden;
+  display: grid;
+  align-content: center;
 }
 
-.dest__index {
-  font-size: 0.66rem;
-  letter-spacing: 0.2em;
-  color: var(--paper-faint);
-}
-
-.dest__name {
-  font-family: var(--font-display);
-  font-size: clamp(1.6rem, 4.4vw, 3.4rem);
-  line-height: 1;
-  transition: transform 0.7s var(--ease-out), color 0.7s var(--ease-out);
-}
-
-.dest__code {
-  font-size: 0.72rem;
-  letter-spacing: 0.24em;
-  color: var(--paper-faint);
-}
-
-.dest__time {
-  font-size: 0.72rem;
-  letter-spacing: 0.14em;
-  color: var(--paper-dim);
-  font-variant-numeric: tabular-nums;
-}
-
-.dest__glow {
+.dest-stage::before {
+  content: '';
   position: absolute;
   inset: 0;
-  background: linear-gradient(90deg, rgba(233, 184, 114, 0.12), rgba(233, 184, 114, 0) 60%);
-  opacity: 0;
-  transition: opacity 0.6s var(--ease-out);
+  z-index: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(
+      90deg,
+      rgba(5, 7, 11, 0.92) 0%,
+      rgba(5, 7, 11, 0.6) 32%,
+      rgba(5, 7, 11, 0) 62%
+    ),
+    linear-gradient(0deg, rgba(5, 7, 11, 0.78), rgba(5, 7, 11, 0) 42%);
+}
+
+.dest-monument {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
   pointer-events: none;
 }
 
-@media (hover: hover) {
-  .dest:hover .dest__name {
-    transform: translateX(clamp(0.5rem, 1.6vw, 1.4rem));
-    color: var(--gold);
-  }
-  .dest:hover .dest__glow {
-    opacity: 1;
-  }
+.dest-monument svg {
+  display: block;
+  width: 100%;
+  height: 100%;
 }
 
-@media (max-width: 720px) {
-  .dest {
-    grid-template-columns: 2.5rem 1fr auto;
+.dest-inner {
+  position: relative;
+  z-index: 2;
+  display: grid;
+  gap: clamp(1rem, 2.2vw, 1.7rem);
+  width: min(40rem, 100%);
+  padding: clamp(4.5rem, 10vh, 6.5rem) var(--gutter) clamp(2rem, 5vh, 3rem);
+}
+
+.dest-head {
+  display: grid;
+  gap: 0.9rem;
+}
+
+/* --- lista --- */
+
+.dest-list {
+  display: grid;
+  gap: clamp(0.1rem, 0.6vh, 0.4rem);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.dest-row {
+  display: grid;
+  grid-template-columns: 2.6rem 1fr auto;
+  align-items: baseline;
+  gap: clamp(0.7rem, 2vw, 1.4rem);
+  width: 100%;
+  padding: clamp(0.35rem, 1.1vh, 0.7rem) 0;
+  text-align: left;
+  color: inherit;
+}
+
+.dest-row__index {
+  font-size: 0.64rem;
+  letter-spacing: 0.2em;
+  color: var(--paper-faint);
+  transition: color 0.45s var(--ease-out);
+}
+
+.dest-row__name {
+  font-family: var(--font-display);
+  font-weight: 700;
+  /* Teto baixo de propósito: seis linhas mais o cabeçalho e a ficha têm de
+     caber numa viewport de 900px sem estourar por cima do header. */
+  font-size: clamp(1.4rem, 2.8vw, 2.3rem);
+  line-height: 1.05;
+  color: rgba(242, 239, 233, 0.34);
+  transition: color 0.45s var(--ease-out), transform 0.55s var(--ease-out);
+}
+
+.dest-row__code {
+  font-size: 0.68rem;
+  letter-spacing: 0.22em;
+  color: transparent;
+  transition: color 0.45s var(--ease-out);
+}
+
+/* O destino ativo é o único aceso — é ele que está no céu atrás. */
+.dest-row.is-on .dest-row__name {
+  color: var(--paper);
+  transform: translateX(clamp(0.3rem, 1.2vw, 1rem));
+}
+
+.dest-row.is-on .dest-row__index,
+.dest-row.is-on .dest-row__code {
+  color: var(--gold);
+}
+
+/* --- ficha do destino ativo --- */
+
+.dest-card {
+  display: grid;
+  gap: 0.7rem;
+  padding-top: clamp(1rem, 2.4vh, 1.6rem);
+  border-top: 1px solid var(--line);
+}
+
+.dest-card__landmark {
+  font-size: clamp(1rem, 1.5vw, 1.2rem);
+  color: var(--paper-dim);
+}
+
+.dest-card__facts {
+  display: flex;
+  gap: clamp(1.6rem, 5vw, 3.5rem);
+  margin: 0;
+}
+
+.dest-card__facts dt {
+  font-size: 0.6rem;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--paper-faint);
+}
+
+.dest-card__facts dd {
+  margin: 0.3rem 0 0;
+  font-family: var(--font-display);
+  font-size: clamp(1.2rem, 2.2vw, 1.7rem);
+}
+
+@media (max-width: 860px) {
+  .dest-inner {
+    width: 100%;
   }
-  .dest__time {
-    display: none;
+  .dest-stage::before {
+    background:
+      linear-gradient(90deg, rgba(5, 7, 11, 0.9) 0%, rgba(5, 7, 11, 0.5) 60%, rgba(5, 7, 11, 0.2) 100%),
+      linear-gradient(0deg, rgba(5, 7, 11, 0.85), rgba(5, 7, 11, 0) 50%);
   }
 }
 
@@ -1069,8 +1161,9 @@ a {
   }
   .cta::before,
   .cta__arrow,
-  .dest__name,
-  .dest__glow,
+  .dest-row__name,
+  .dest-row__index,
+  .dest-row__code,
   .nav__links a::after {
     transition-duration: 0.01ms;
   }

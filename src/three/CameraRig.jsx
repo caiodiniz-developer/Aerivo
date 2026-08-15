@@ -33,6 +33,23 @@ const SHOTS = [
 
 const KEY_COUNT = SHOTS.length
 
+/**
+ * Plano fixo do trecho de destinos.
+ *
+ * Câmera em +X olhando para a origem, com o avião voando em −Z: nessa
+ * combinação o −Z cai à direita da tela, então ele cruza o quadro da esquerda
+ * para a direita, de perfil, indo na direção do monumento. A mira sobe um
+ * pouco para o avião ficar no terço superior e deixar a silhueta livre.
+ */
+const DEST_SHOT = {
+  pos: new THREE.Vector3(40, 13, 0),
+  // `look` é somado à posição do avião: mirar acima dele o joga para baixo na
+  // tela. Aqui a mira desce, então ele sobe para o terço superior — que é a
+  // faixa livre acima da silhueta do monumento.
+  look: new THREE.Vector3(0, -4, 0),
+  fov: 30,
+}
+
 /** Proporção em que os planos foram compostos. */
 const REF_ASPECT = 16 / 9
 
@@ -82,12 +99,21 @@ export default function CameraRig() {
       a.look[2] + (b.look[2] - a.look[2]) * k,
     )
 
+    // Modo destino: câmera perpendicular à rota, para o avião passar de
+    // perfil — é assim que ele "entra" na cena do lugar.
+    const db = flight.destBlend
+    if (db > 0.001) {
+      tmp.pos.lerp(DEST_SHOT.pos, db)
+      tmp.offset.lerp(DEST_SHOT.look, db)
+    }
+
     // Correção de proporção. Numa tela em pé o campo horizontal encolhe muito;
     // com os mesmos números do 16:9 o avião simplesmente sai de quadro pela
     // lateral. Em tela estreita: abre o campo, afasta a câmera e reduz o
     // deslocamento lateral do enquadramento.
     const narrow = clamp((REF_ASPECT - camera.aspect) / (REF_ASPECT - 0.5))
-    const fov = a.fov + (b.fov - a.fov) * k + narrow * 18
+    const shotFov = a.fov + (b.fov - a.fov) * k
+    const fov = shotFov * (1 - db) + DEST_SHOT.fov * db + narrow * 18
     const pullBack = 1 + narrow * 0.45
     tmp.offset.x *= 1 - narrow * 0.72
     tmp.pos.multiplyScalar(pullBack)

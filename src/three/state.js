@@ -34,6 +34,11 @@ export const flight = {
   my: 0,
   /** Paleta amostrada no frame atual. */
   sky: createSkyState(),
+
+  /** 0→1: o quanto a cena já virou "modo destino" (paleta + enquadramento). */
+  destBlend: 0,
+  /** 0→1 dentro do destino ativo — leva o avião de um lado ao outro do quadro. */
+  destU: 0,
 }
 
 /**

@@ -66,6 +66,30 @@ o embaralhamento (`mod`) fica invisível. A parte do deslocamento que não vem d
 scroll (`CRUISE`) segue correndo com o scroll parado — avião parado no ar mata
 a cena.
 
+### 3. Destinos (`src/components/Destinations.jsx`)
+
+Não é uma seção separada: é a **mesma cena 3D**, vestida com a paleta de cada
+lugar. Um palco sticky com um bloco de scroll por destino; conforme você passa
+(ou aponta o cursor para uma linha), o céu troca de cor e o monumento aparece.
+
+A pilha, de trás para frente:
+
+```
+canvas WebGL — céu em movimento + avião      z-index 1 (fixo, global)
+véu de leitura                               .dest-stage::before
+silhueta do monumento                        .dest-monument
+lista e ficha                                .dest-inner
+```
+
+O avião passa **atrás** da silhueta e **acima** dela — é isso que faz a cena ter
+profundidade em vez de parecer um adesivo sobre um vídeo. No trecho de destinos
+a câmera vai para um plano perpendicular à rota (`DEST_SHOT` em `CameraRig`) e o
+avião assume rota reta, cruzando o quadro de perfil no rumo do monumento.
+
+As silhuetas (`src/components/landmarks.jsx`) são SVG desenhado em código:
+nenhuma imagem para baixar, escalam sem perder, e o recorte em contraluz é a
+mesma linguagem do avião do vídeo da hero.
+
 **Orientação do modelo.** A matriz do nó raiz do Sketchfab manda o +Y do modelo
 (onde está a deriva) para o −Z do mundo, ou seja, o nariz nasce apontando para
 +Z. O `lookAt` do three orienta o −Z local para o alvo, então o modelo leva meia
@@ -131,6 +155,16 @@ Estão comentadas no código, mas vale a lista:
   como um interruptor geral tirou do ar a hero em vídeo e a cena 3D — as duas
   entregas centrais — para uma fatia grande de usuários. O que a preferência
   pede é o fim do movimento que acontece *sozinho*, não o fim do conteúdo.
+- **`look` na câmera é somado à posição do avião.** Mirar *acima* dele o joga
+  para *baixo* na tela. Errar esse sinal foi o que escondia o avião atrás do
+  monumento no trecho de destinos.
+- **O GSAP escreve `opacity: 1` no que ele anima.** Animar direto um elemento
+  desenhado translúcido (sol, bruma) o transforma em branco chapado — o alvo
+  da animação tem de ser um grupo sem estilo por fora.
+- **`aspect-ratio` + `max-height` encolhe a largura também.** Para uma caixa
+  que precisa manter 100% de largura com altura variável, use `height`.
+- **Gradiente em linha horizontal precisa de `gradientUnits="userSpaceOnUse"`**:
+  a bounding box tem altura zero e `objectBoundingBox` não resolve.
 - **Chrome headless reporta `reduce` por padrão.** Qualquer teste automatizado
   precisa de `emulateMediaFeatures` para exercitar o caminho com movimento —
   e, justamente por isso, o headless sem override é o melhor teste do caminho

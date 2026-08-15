@@ -4,8 +4,11 @@ import { useGLTF } from '@react-three/drei'
 import * as THREE from 'three'
 import { flight, plane, TRAVEL } from './state'
 import { getGlowTexture } from './puffTexture'
-import { band, clamp, damp } from '../lib/math'
+import { band, clamp, damp, lerp } from '../lib/math'
 import { motionSafe } from '../lib/env'
+
+/** Rumo do sobrevoo no modo destino: reto, para −Z. */
+const FORWARD = new THREE.Vector3(0, 0, -1)
 
 /**
  * Orientação do aviao.glb, apurada lendo o binário (ver a análise em
@@ -198,11 +201,33 @@ export default function Aircraft({ url }) {
       (motionSafe ? Math.sin(t * 0.34) * 0.05 : 0)
     smooth.current.bank = damp(smooth.current.bank, targetBank, 0.06, dt)
 
+    // Modo destino: o avião assume uma rota reta e cruza o quadro de perfil,
+    // no rumo do monumento. A mistura é gradual, então a transição entre a
+    // narrativa do céu e o trecho dos destinos não tem corte.
+    const db = flight.destBlend
+    let fx = px
+    let fy = py
+    let fz = pz
+    if (db > 0.001) {
+      fx = lerp(px, 0, db)
+      // Alto o bastante para cruzar acima de qualquer silhueta: os monumentos
+      // ocupam a faixa de baixo do quadro, e o avião passando atrás deles
+      // simplesmente desaparecia.
+      fy = lerp(py, 11, db)
+      // ±30 e não mais: a câmera do plano de destino enquadra cerca de 19
+      // unidades para cada lado, então uma travessia mais larga deixaria o
+      // avião fora de quadro na maior parte do scroll daquele destino.
+      fz = lerp(pz, lerp(30, -30, clamp(flight.destU)), db)
+      // Asas niveladas e nariz reto: é um sobrevoo, não uma manobra.
+      tmp.forward.lerp(FORWARD, db).normalize()
+      smooth.current.bank *= 1 - db
+    }
+
     const d = tmp.dummy
-    d.position.set(px, py, pz)
+    d.position.set(fx, fy, fz)
     // O `lookAt` já embute o arfamento da trajetória — somar pitch aqui
     // contaria a subida duas vezes. Só sobra a respiração.
-    d.lookAt(px + tmp.forward.x, py + tmp.forward.y, pz + tmp.forward.z)
+    d.lookAt(fx + tmp.forward.x, fy + tmp.forward.y, fz + tmp.forward.z)
     d.rotateZ(smooth.current.bank)
     d.rotateX(motionSafe ? Math.sin(t * 0.5) * 0.014 : 0)
     d.updateMatrixWorld(true)

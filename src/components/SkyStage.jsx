@@ -28,6 +28,9 @@ export default function SkyStage({ ready, modelUrl }) {
       ScrollTrigger.create({
         trigger: track.current,
         start: 'top bottom+=100%',
+        // Vai até o fim dos destinos: o loop de render precisa continuar
+        // rodando enquanto o avião cruza a cena de cada lugar.
+        endTrigger: '#destinos',
         end: 'bottom top-=50%',
         onToggle: (self) => setLive(self.isActive),
       }),
@@ -53,7 +56,17 @@ export default function SkyStage({ ready, modelUrl }) {
           scrollTrigger: { trigger: track.current, start: 'top 92%', end: 'top 20%', scrub: true },
         },
       )
-      gsap.to([canvas.current, '.hud'], {
+      // A cena não se apaga no fim do trilho 3D: ela segue viva por baixo do
+      // trecho de destinos, que é onde o avião entra na cena de cada lugar.
+      // Só depois dali é que o canvas sai.
+      const exit = document.querySelector('#destinos') ?? track.current
+      gsap.to(canvas.current, {
+        opacity: 0,
+        ease: 'none',
+        scrollTrigger: { trigger: exit, start: 'bottom 90%', end: 'bottom 45%', scrub: true },
+      })
+      // O HUD, sim, some junto com a narrativa de altitude.
+      gsap.to('.hud', {
         opacity: 0,
         ease: 'none',
         scrollTrigger: { trigger: track.current, start: 'bottom 88%', end: 'bottom 42%', scrub: true },

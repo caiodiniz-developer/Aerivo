@@ -71,8 +71,17 @@ function verifyAllIntra(file) {
   return ok
 }
 
+const hqOut = resolve(outDir, 'jet-scrub-hq.mp4')
 const desktopOut = resolve(outDir, 'jet-scrub.mp4')
 const mobileOut = resolve(outDir, 'jet-scrub-mobile.mp4')
+
+// Full HD all-intra, direto do master de 1920x1080. É o que roda em tela
+// grande com conexão boa: em 1600px de largura o 720p chega esticado e a
+// fuselagem perde o brilho especular, que é justamente o assunto do plano.
+if (existsSync(src)) {
+  encode({ input: src, out: hqOut, width: 1920, crf: 23 })
+  verifyAllIntra(hqOut)
+}
 
 // Desktop: o arquivo entregue já é all-intra 720p. Só copiamos.
 if (existsSync(webSrc)) {

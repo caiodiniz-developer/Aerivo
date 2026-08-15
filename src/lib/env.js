@@ -75,8 +75,28 @@ export const tier = (() => {
  */
 export const canScrub = !saveData;
 
-export const videoSrc =
-  isSmall || saveData ? "/media/jet-scrub-mobile.mp4" : "/media/jet-scrub.mp4";
+/**
+ * Três cortes do mesmo plano, todos all-intra.
+ *
+ *   hq      1920x1080  34 MB — tela grande e conexão boa
+ *   padrão  1280x720   14 MB — o resto do desktop
+ *   mobile   720x406    4 MB — telas pequenas e conexão econômica
+ *
+ * O HQ é grande porque all-intra em Full HD é caro; ele só vale onde a tela
+ * realmente mostra a diferença, e o 720p esticado em 1600px é justamente onde
+ * o brilho especular da fuselagem — o assunto do plano — se perde.
+ */
+export const videoSrc = (() => {
+  if (isSmall || saveData) return "/media/jet-scrub-mobile.mp4";
+
+  const wide = typeof window !== "undefined" && window.innerWidth >= 1400;
+  const fastLink = !conn?.effectiveType || conn.effectiveType === "4g";
+  const beefy = mem >= 8;
+
+  return wide && fastLink && beefy
+    ? "/media/jet-scrub-hq.mp4"
+    : "/media/jet-scrub.mp4";
+})();
 
 export const dpr =
   tier === "high" ? [1, 2] : tier === "mid" ? [1, 1.5] : [1, 1.25];
