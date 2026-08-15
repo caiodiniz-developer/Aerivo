@@ -27,12 +27,19 @@ export default function StageBackdrop() {
 
   return (
     <div className="backdrop" aria-hidden="true">
+      {/* `<img>` e não `background-image` num div: animar `scale` num
+          background-image obriga o navegador a repintar a imagem em escala
+          nova a cada frame. Com <img> + object-fit, a camada fica compostada
+          na GPU e o crossfade é só opacidade + transform. */}
       {destinations.map((d, i) => (
-        <div
+        <img
           key={d.code}
           className="backdrop__layer"
           data-bg={i}
-          style={{ backgroundImage: `url("${d.photo}")` }}
+          src={d.photo}
+          alt=""
+          decoding="async"
+          fetchPriority={i === 0 ? 'high' : 'low'}
         />
       ))}
       <div className="backdrop__scrim" />

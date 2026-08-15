@@ -174,7 +174,12 @@ function SkyEnvironment({ every = 10 }) {
   }, [scene, rt])
 
   useFrame(({ camera }) => {
-    if (n.current++ % every !== 0) return
+    // Nos destinos e no fecho a paleta fica parada e o mundo já saiu da
+    // câmera principal — refazer o cubo ali é seis renders por nada, e o
+    // pico batia em cadência fixa, com cara de engasgo no scroll.
+    const idle = flight.destBlend > 0.5 || flight.parkBlend > 0.5
+    const interval = idle ? every * 12 : every
+    if (n.current++ % interval !== 0) return
     cam.position.copy(camera.position)
     cam.update(gl, scene)
   }, -20)

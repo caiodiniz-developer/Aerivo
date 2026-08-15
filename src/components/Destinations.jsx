@@ -14,8 +14,14 @@ import { destinations } from '../content'
  */
 const SCROLL_PER_DEST = 0.75
 
-/** Suavização quase nula: mais que isto e o avião passa a "correr atrás". */
-const SCRUB = 0.1
+/**
+ * Interpolação entre o progresso do scroll e o da timeline.
+ *
+ * Perto de zero, a timeline salta de tick em tick da roda do mouse e o
+ * movimento vira degrau. 0,25 é o ponto em que os degraus somem sem que dê
+ * para perceber atraso entre o dedo e o avião.
+ */
+const SCRUB = 0.25
 
 const brl = new Intl.NumberFormat('pt-BR', {
   style: 'currency',
@@ -56,6 +62,7 @@ export default function Destinations() {
           pin: true,
           pinSpacing: true,
           scrub: SCRUB,
+          anticipatePin: 1,
           invalidateOnRefresh: true,
           animation: master,
           onUpdate: (self) => {
