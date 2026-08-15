@@ -20,48 +20,53 @@ export default function Destinations() {
   const resizeKey = useResizeKey()
   const [active, setActive] = useState(0)
 
-  /* ---------------- presença do trecho na cena 3D ---------------- */
+  /* ---------------- a travessia é o scroll ---------------- */
   useLayoutEffect(() => {
-    const st = ScrollTrigger.create({
+    // Um bloco de scroll por destino. Dentro de cada bloco o avião atravessa
+    // uma vez, da direita para a esquerda; ao virar o bloco, a foto troca.
+    const cross = ScrollTrigger.create({
+      trigger: track.current,
+      start: 'top top',
+      end: 'bottom bottom',
+      onUpdate: (self) => {
+        const total = self.progress * destinations.length
+        const i = clamp(Math.floor(total), 0, destinations.length - 1)
+        flight.crossU = clamp(total - i)
+        flight.loopThisPass = !!destinations[i].loop
+        // O React descarta o set quando o índice não muda, então isto não
+        // custa re-render por frame de scroll.
+        setActive(i)
+      },
+    })
+
+    // Presença na cena 3D: entra antes da seção aparecer e sai depois dela.
+    const blend = ScrollTrigger.create({
       trigger: track.current,
       start: 'top bottom-=10%',
       end: 'bottom top+=10%',
       onUpdate: (self) => {
-        // Sobe rápido na entrada, cai rápido na saída, cheio no meio.
         const p = self.progress
         progress.destBlend = clamp(Math.min(p / 0.1, (1 - p) / 0.1))
       },
       onLeave: () => (progress.destBlend = 0),
       onLeaveBack: () => (progress.destBlend = 0),
     })
+
     ScrollTrigger.refresh()
     return () => {
-      st.kill()
+      cross.kill()
+      blend.kill()
       progress.destBlend = 0
     }
   }, [])
 
-  /* ---------------- a foto troca quando o avião sai de quadro ---------------- */
+  /* ---------------- foto de fundo ---------------- */
   useEffect(() => {
-    let lastCount = -1
-    const tick = () => {
-      if (flight.crossCount === lastCount) return
-      lastCount = flight.crossCount
-      const next = flight.crossCount % destinations.length
-      setActive(next)
-      // Só a passagem seguinte é que sabe se leva laço — assim o giro nunca
-      // começa no meio de uma travessia já em curso.
-      flight.loopThisPass = !!destinations[next].loop
-      setBackdropPhoto(destinations[next].photo)
-    }
-    gsap.ticker.add(tick)
-    return () => gsap.ticker.remove(tick)
-  }, [])
+    setBackdropPhoto(destinations[active].photo)
+  }, [active])
 
-  // Primeira foto: entra já montada, sem esperar a primeira volta.
+  // Pré-carrega todas: a troca é instantânea e o crossfade nunca mostra vazio.
   useEffect(() => {
-    setBackdropPhoto(destinations[0].photo)
-    flight.loopThisPass = !!destinations[0].loop
     destinations.forEach((d) => {
       const img = new Image()
       img.src = d.photo
@@ -139,10 +144,9 @@ export default function Destinations() {
         </div>
       </div>
 
-      {/* Altura de scroll do trecho. A troca de destino é do relógio da
-          travessia, não do scroll — isto só define quanto tempo a seção fica
-          em cena. */}
-      <div style={{ height: `${destinations.length * 62}vh` }} aria-hidden="true" />
+      {/* Um bloco de scroll por destino: é o que dá a cada um a sua travessia
+          inteira, da direita até o fim da tela. */}
+      <div style={{ height: `${destinations.length * 95}vh` }} aria-hidden="true" />
     </section>
   )
 }

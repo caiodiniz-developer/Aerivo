@@ -66,6 +66,7 @@ export const destinations = [
     time: '11h 25',
     landmark: 'O Coliseu',
     photo: '/media/coliseu.jpg',
+    loop: true,
     basePrice: 5180,
   },
   {
@@ -75,7 +76,6 @@ export const destinations = [
     time: '24h 15',
     landmark: 'A Torre de Tóquio, com o Fuji ao fundo',
     photo: '/media/torre%20de%20toquio.jpg',
-    loop: true,
     basePrice: 8740,
   },
   {
@@ -85,6 +85,7 @@ export const destinations = [
     time: '01h 05',
     landmark: 'O Cristo e o Pão de Açúcar',
     photo: '/media/cristo%20redentor.jpg',
+    loop: true,
     basePrice: 1240,
   },
   {
@@ -94,7 +95,6 @@ export const destinations = [
     time: '03h 10',
     landmark: 'O Obelisco',
     photo: '/media/obelisco.jpg',
-    loop: true,
     basePrice: 1890,
   },
   {
@@ -104,6 +104,7 @@ export const destinations = [
     time: '10h 45',
     landmark: 'A Sagrada Família',
     photo: '/media/sagrada%20familia.jpg',
+    loop: true,
     basePrice: 4720,
   },
   {
@@ -113,7 +114,6 @@ export const destinations = [
     time: '10h 20',
     landmark: 'Chichén Itzá',
     photo: '/media/chicen%20itza.jpg',
-    loop: true,
     basePrice: 3960,
   },
 ]

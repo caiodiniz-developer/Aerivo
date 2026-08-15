@@ -15,9 +15,6 @@ import Aircraft from './Aircraft'
 import Contrail from './Contrail'
 import CameraRig from './CameraRig'
 
-/** Segundos de uma travessia completa, de fora a fora da tela. */
-const CROSS_SECONDS = 9
-
 /** Luz de hora dourada usada nos trechos em que o fundo é foto. */
 const LIT_SUN = new THREE.Color('#ffd9a8')
 const LIT_SKY = new THREE.Color('#6f93c4')
@@ -96,15 +93,10 @@ function Driver() {
       s.sunDir.lerp(LIT_DIR, lit).normalize()
     }
 
-    // Relógio da travessia. Só corre quando o trecho está em cena, para o
-    // avião não chegar já no meio de uma passagem.
-    if (flight.destBlend > 0.02) {
-      flight.crossU += d / CROSS_SECONDS
-      while (flight.crossU >= 1) {
-        flight.crossU -= 1
-        flight.crossCount++
-      }
-    }
+    // A travessia é escrita pelo <Destinations/> a partir do scroll. Um
+    // relógio por tempo aqui já congelou a cena inteira quando parava de
+    // avançar: o avião ficava plantado no meio do quadro e a foto nunca
+    // trocava. Amarrado ao scroll, ele só pode parar se a página parar.
 
     gl.toneMappingExposure = flight.sky.exposure
     if (scene.fog) {
