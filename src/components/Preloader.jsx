@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react'
 import gsap from 'gsap'
 import { preloadAssets } from '../lib/preload'
 import { stopScroll, startScroll } from '../lib/scroll'
+import { motionSafe } from '../lib/env'
 
 /**
  * Cortina de abertura. Trava o scroll, carrega os assets pesados e entrega
@@ -17,12 +18,15 @@ export default function Preloader({ onReady }) {
     stopScroll()
 
     const ctx = gsap.context(() => {
-      gsap.set('.preloader__word > span', { yPercent: 110 })
+      // A cortina é movimento autônomo: sob reduced-motion ela aparece e sai
+      // com opacidade, sem deslizar.
+      gsap.set('.preloader__word > span', { yPercent: motionSafe ? 110 : 0, opacity: motionSafe ? 1 : 0 })
       gsap.to('.preloader__word > span', {
         yPercent: 0,
-        duration: 1.1,
+        opacity: 1,
+        duration: motionSafe ? 1.1 : 0.4,
         ease: 'expo.out',
-        stagger: 0.08,
+        stagger: motionSafe ? 0.08 : 0.04,
         delay: 0.12,
       })
     }, root)
@@ -48,10 +52,11 @@ export default function Preloader({ onReady }) {
         .timeline({ defaults: { ease: 'expo.inOut' } })
         .to({}, { duration: 0.55 }) // deixa a barra alcançar 100
         .to('.preloader__word > span', {
-          yPercent: -115,
-          filter: 'blur(10px)',
-          duration: 0.9,
-          stagger: 0.06,
+          yPercent: motionSafe ? -115 : 0,
+          opacity: motionSafe ? 1 : 0,
+          filter: motionSafe ? 'blur(10px)' : 'blur(0px)',
+          duration: motionSafe ? 0.9 : 0.35,
+          stagger: motionSafe ? 0.06 : 0.03,
         })
         .to('.preloader__meta, .preloader__bar', { opacity: 0, duration: 0.5 }, '<')
         .to(

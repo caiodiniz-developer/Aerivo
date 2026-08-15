@@ -83,9 +83,22 @@ duas amostras da curva, então o ângulo não depende do passo de amostragem.
 
 `src/lib/env.js` decide tudo uma vez, no load:
 
-- **`prefers-reduced-motion: reduce`** → sem scrub, sem WebGL, sem preloader.
-  `VideoStage` e `SkyStage` renderizam uma versão em fluxo normal, com o mesmo
-  texto (a fonte do copy é única, em `src/content.js`).
+- **`prefers-reduced-motion: reduce`** → sai o movimento *autônomo*: deriva
+  ociosa do mundo, tremor de câmera, parallax de ponteiro, cintilação de
+  estrelas e luzes, grão animado, inércia de scroll. Os reveals de texto viram
+  opacidade pura, sem deslocamento nem desfoque.
+
+  **A sequência de scroll continua.** Ela é resposta 1:1 ao gesto do usuário,
+  como arrastar uma imagem: parar o dedo para o quadro. A primeira versão
+  desligava tudo aqui, e o resultado era um site sem as duas features
+  principais para quem tem "efeitos de animação" desligados no Windows,
+  economia de bateria ligada ou "Reduce motion" no macOS.
+
+  Para pré-visualizar a versão com movimento completo tendo a preferência
+  ligada no sistema, abra com `?forceMotion=1`.
+- **Sem WebGL** → único caminho realmente estático: `SkyStage` cai para os
+  capítulos em fluxo normal, com o mesmo texto (a fonte do copy é única, em
+  `src/content.js`).
 - **Tela pequena ou conexão econômica** → variante `jet-scrub-mobile.mp4`
   (720px, 4 MB contra 14 MB).
 - **Três níveis de qualidade** (`quality`) dimensionam contagem de nuvens,
@@ -114,3 +127,11 @@ Estão comentadas no código, mas vale a lista:
   "mar de nuvens" cresce para cima e engole a câmera.
 - **A névoa é exp²:** a densidade entra ao quadrado junto com a distância. Na
   escala desta cena, qualquer valor acima de ~0,002 vira leite.
+- **`prefers-reduced-motion` não é "desligue o site".** Tratar a preferência
+  como um interruptor geral tirou do ar a hero em vídeo e a cena 3D — as duas
+  entregas centrais — para uma fatia grande de usuários. O que a preferência
+  pede é o fim do movimento que acontece *sozinho*, não o fim do conteúdo.
+- **Chrome headless reporta `reduce` por padrão.** Qualquer teste automatizado
+  precisa de `emulateMediaFeatures` para exercitar o caminho com movimento —
+  e, justamente por isso, o headless sem override é o melhor teste do caminho
+  reduzido.

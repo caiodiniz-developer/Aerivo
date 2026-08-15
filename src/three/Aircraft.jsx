@@ -5,6 +5,7 @@ import * as THREE from 'three'
 import { flight, plane, TRAVEL } from './state'
 import { getGlowTexture } from './puffTexture'
 import { band, clamp, damp } from '../lib/math'
+import { motionSafe } from '../lib/env'
 
 /**
  * Orientação do aviao.glb, apurada lendo o binário (ver a análise em
@@ -180,8 +181,10 @@ export default function Aircraft({ url }) {
     tmp.forward.set(vx * YAW_GAIN, vy * PITCH_GAIN, -TRAVEL).normalize()
 
     // Respiração: o avião nunca fica parado, mesmo com o scroll parado.
-    const bobY = Math.sin(t * 0.62) * 0.16 + Math.sin(t * 0.23) * 0.1
-    const swayX = Math.sin(t * 0.41 + 1.7) * 0.2
+    // Some sob reduced-motion — é exatamente o tipo de balanço contínuo que
+    // a preferência pede para tirar.
+    const bobY = motionSafe ? Math.sin(t * 0.62) * 0.16 + Math.sin(t * 0.23) * 0.1 : 0
+    const swayX = motionSafe ? Math.sin(t * 0.41 + 1.7) * 0.2 : 0
 
     const px = tmp.here.x + swayX + flight.mx * 0.6
     const py = tmp.here.y + bobY - flight.my * 0.4
@@ -191,7 +194,8 @@ export default function Aircraft({ url }) {
     // a ideia de que ele está mesmo manobrando. Limitado a ~24°: acima disso
     // deixa de ler como avião de linha e vira caça.
     const targetBank =
-      THREE.MathUtils.clamp(-vx * BANK_GAIN, -MAX_BANK, MAX_BANK) + Math.sin(t * 0.34) * 0.05
+      THREE.MathUtils.clamp(-vx * BANK_GAIN, -MAX_BANK, MAX_BANK) +
+      (motionSafe ? Math.sin(t * 0.34) * 0.05 : 0)
     smooth.current.bank = damp(smooth.current.bank, targetBank, 0.06, dt)
 
     const d = tmp.dummy
@@ -200,7 +204,7 @@ export default function Aircraft({ url }) {
     // contaria a subida duas vezes. Só sobra a respiração.
     d.lookAt(px + tmp.forward.x, py + tmp.forward.y, pz + tmp.forward.z)
     d.rotateZ(smooth.current.bank)
-    d.rotateX(Math.sin(t * 0.5) * 0.014)
+    d.rotateX(motionSafe ? Math.sin(t * 0.5) * 0.014 : 0)
     d.updateMatrixWorld(true)
 
     g.position.copy(d.position)
@@ -224,7 +228,7 @@ export default function Aircraft({ url }) {
 
     // Estroboscópicas de navegação: só fazem sentido quando escurece.
     const night = clamp(flight.sky.stars * 1.4)
-    const strobe = Math.pow((Math.sin(t * 2.4) + 1) * 0.5, 8)
+    const strobe = motionSafe ? Math.pow((Math.sin(t * 2.4) + 1) * 0.5, 8) : 0.5
     for (const ref of [navL, navR]) {
       if (!ref.current) continue
       ref.current.material.opacity = night * (0.35 + strobe * 0.65)

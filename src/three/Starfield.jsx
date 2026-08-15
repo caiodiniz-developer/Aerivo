@@ -3,6 +3,7 @@ import { useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
 import { flight } from './state'
 import { mulberry32 } from '../lib/math'
+import { motionSafe } from '../lib/env'
 
 const vertex = /* glsl */ `
   attribute float aSize;
@@ -78,7 +79,8 @@ export default function Starfield({ count = 1800, radius = 480 }) {
   )
 
   useFrame(({ camera, gl }, dt) => {
-    uniforms.uTime.value += dt
+    // A cintilação é o único movimento daqui; congela sob reduced-motion.
+    if (motionSafe) uniforms.uTime.value += dt
     uniforms.uOpacity.value = flight.sky.stars
     uniforms.uPixelRatio.value = gl.getPixelRatio()
     if (points.current) points.current.position.copy(camera.position)

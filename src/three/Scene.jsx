@@ -3,7 +3,7 @@ import { useFrame, useThree } from '@react-three/fiber'
 import * as THREE from 'three'
 import { progress } from '../lib/scroll'
 import { clamp, damp } from '../lib/math'
-import { quality, tier } from '../lib/env'
+import { quality, tier, motionSafe } from '../lib/env'
 import { sampleSky } from './palette'
 import { flight, ENV_LAYER, TRAVEL, CRUISE } from './state'
 import { getGlowTexture } from './puffTexture'
@@ -29,11 +29,13 @@ function Driver() {
 
     flight.raw = progress.sky
     flight.p = damp(flight.p, flight.raw, 0.1, d)
-    flight.mx = damp(flight.mx, progress.pointer.x, 0.035, d)
-    flight.my = damp(flight.my, progress.pointer.y, 0.035, d)
+    // Parallax de ponteiro é movimento que o usuário não pediu.
+    flight.mx = motionSafe ? damp(flight.mx, progress.pointer.x, 0.035, d) : 0
+    flight.my = motionSafe ? damp(flight.my, progress.pointer.y, 0.035, d) : 0
 
     const before = flight.distance
-    flight.distance = flight.p * TRAVEL + elapsed.current * CRUISE
+    // Sob reduced-motion o mundo só anda com o scroll: sem deriva ociosa.
+    flight.distance = flight.p * TRAVEL + (motionSafe ? elapsed.current * CRUISE : 0)
     flight.dDistance = flight.distance - before
 
     sampleSky(flight.p, flight.sky)

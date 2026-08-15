@@ -1,7 +1,7 @@
 import { useLayoutEffect, useRef } from 'react'
 import gsap from 'gsap'
-import { splitLines, within, hidden, shown, useResizeKey } from '../lib/split'
-import { reducedMotion } from '../lib/env'
+import { splitLines, within, hidden, shown, revealDuration, useResizeKey } from '../lib/split'
+import { motionSafe } from '../lib/env'
 import { closing, brand } from '../content'
 
 export default function Closing() {
@@ -9,7 +9,6 @@ export default function Closing() {
   const resizeKey = useResizeKey()
 
   useLayoutEffect(() => {
-    if (reducedMotion) return
     const scope = root.current
     const { lines, revert } = splitLines(within(scope, '.js-split'))
 
@@ -19,9 +18,18 @@ export default function Closing() {
           scrollTrigger: { trigger: scope, start: 'top 72%', once: true },
           defaults: { ease: 'expo.out' },
         })
-        .fromTo('.js-eyebrow', { opacity: 0, y: 22 }, { opacity: 1, y: 0, duration: 0.9 })
-        .fromTo(lines, hidden, { ...shown, duration: 1.35, stagger: 0.08 }, '-=0.6')
-        .fromTo('.js-late', { opacity: 0, y: 30 }, { opacity: 1, y: 0, duration: 1, stagger: 0.1 }, '-=0.9')
+        .fromTo(
+          '.js-eyebrow',
+          { opacity: 0, y: motionSafe ? 22 : 0 },
+          { opacity: 1, y: 0, duration: 0.9 },
+        )
+        .fromTo(lines, hidden, { ...shown, duration: revealDuration, stagger: 0.08 }, '-=0.6')
+        .fromTo(
+          '.js-late',
+          { opacity: 0, y: motionSafe ? 30 : 0 },
+          { opacity: 1, y: 0, duration: 1, stagger: 0.1 },
+          '-=0.9',
+        )
     }, scope)
 
     return () => {

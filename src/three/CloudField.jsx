@@ -4,6 +4,7 @@ import * as THREE from 'three'
 import { flight, ENV_LAYER } from './state'
 import { getPuffTexture } from './puffTexture'
 import { mulberry32 } from '../lib/math'
+import { motionSafe } from '../lib/env'
 
 const vertex = /* glsl */ `
   attribute vec3 aPos;
@@ -218,7 +219,9 @@ export default function CloudField({
   useFrame((_, dt) => {
     const s = flight.sky
     uniforms.uScroll.value = flight.distance
-    uniforms.uTime.value += dt
+    // `uTime` só alimenta a deriva vertical das massas de ar — movimento
+    // autônomo, então congela sob reduced-motion.
+    if (motionSafe) uniforms.uTime.value += dt
     uniforms.uSunDir.value.copy(s.sunDir)
     uniforms.uLight.value.copy(s.cloudLight)
     uniforms.uDark.value.copy(s.cloudDark)

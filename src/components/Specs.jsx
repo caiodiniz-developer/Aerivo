@@ -1,6 +1,6 @@
 import { useLayoutEffect, useRef } from 'react'
 import gsap from 'gsap'
-import { reducedMotion } from '../lib/env'
+import { motionSafe } from '../lib/env'
 
 const fmt = new Intl.NumberFormat('pt-BR')
 
@@ -9,7 +9,6 @@ export default function Specs({ items }) {
   const root = useRef(null)
 
   useLayoutEffect(() => {
-    if (reducedMotion) return
     const ctx = gsap.context(() => {
       const nodes = gsap.utils.toArray('.js-count')
       nodes.forEach((node) => {
@@ -31,8 +30,8 @@ export default function Specs({ items }) {
 
       gsap.from('.spec', {
         opacity: 0,
-        y: 40,
-        duration: 1.1,
+        y: motionSafe ? 40 : 0,
+        duration: motionSafe ? 1.1 : 0.45,
         ease: 'expo.out',
         stagger: 0.09,
         scrollTrigger: { trigger: root.current, start: 'top bottom-=5%', once: true },
@@ -47,7 +46,7 @@ export default function Specs({ items }) {
         <div className="spec" key={s.label}>
           <div className="spec__value">
             <span className="js-count mono" data-value={s.n}>
-              {reducedMotion ? fmt.format(s.n) : '0'}
+              0
             </span>
             <span className="spec__unit">{s.unit}</span>
           </div>

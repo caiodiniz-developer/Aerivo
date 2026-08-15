@@ -3,6 +3,7 @@ import { useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
 import { flight } from './state'
 import { mulberry32 } from '../lib/math'
+import { motionSafe } from '../lib/env'
 
 const vertex = /* glsl */ `
   attribute float aSize;
@@ -108,7 +109,7 @@ export default function CityLights({ count = 1400, spanX = 3000, spanZ = 3000, y
   )
 
   useFrame(({ gl }, dt) => {
-    uniforms.uTime.value += dt
+    if (motionSafe) uniforms.uTime.value += dt
     uniforms.uScroll.value = flight.distance
     uniforms.uOpacity.value = flight.sky.city
     uniforms.uPixelRatio.value = gl.getPixelRatio()

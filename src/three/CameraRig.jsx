@@ -3,6 +3,7 @@ import { useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
 import { flight, plane } from './state'
 import { clamp, damp } from '../lib/math'
+import { motionSafe } from '../lib/env'
 
 /**
  * Decupagem em sete planos. `pos` é a posição da câmera; `look` é um
@@ -97,8 +98,9 @@ export default function CameraRig() {
     const py = flight.my * 1.6
 
     // Micro-tremor de câmera na mão. Duas frequências irracionais entre si
-    // para nunca repetir um padrão perceptível.
-    const shake = 0.14
+    // para nunca repetir um padrão perceptível. É movimento autônomo — sai
+    // inteiro sob reduced-motion.
+    const shake = motionSafe ? 0.14 : 0
     const sx = (Math.sin(t * 0.73) + Math.sin(t * 1.91) * 0.5) * shake
     const sy = (Math.cos(t * 0.61) + Math.sin(t * 1.37) * 0.5) * shake
 

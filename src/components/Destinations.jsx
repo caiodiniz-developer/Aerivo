@@ -1,7 +1,7 @@
 import { useLayoutEffect, useRef } from 'react'
 import gsap from 'gsap'
-import { splitLines, within, hidden, shown, useResizeKey } from '../lib/split'
-import { reducedMotion } from '../lib/env'
+import { splitLines, within, hidden, shown, revealDuration, useResizeKey } from '../lib/split'
+import { motionSafe } from '../lib/env'
 import { destinations } from '../content'
 
 export default function Destinations() {
@@ -15,7 +15,7 @@ export default function Destinations() {
     const ctx = gsap.context(() => {
       gsap.fromTo(head.lines, hidden, {
         ...shown,
-        duration: 1.2,
+        duration: revealDuration,
         ease: 'expo.out',
         stagger: 0.08,
         scrollTrigger: { trigger: '.section__head', start: 'top 82%', once: true },
@@ -24,11 +24,11 @@ export default function Destinations() {
       // Cada linha sobe por trás da régua acima dela — daí o clip.
       gsap.fromTo(
         '.dest',
-        { yPercent: 40, opacity: 0 },
+        { yPercent: motionSafe ? 40 : 0, opacity: 0 },
         {
           yPercent: 0,
           opacity: 1,
-          duration: 1.05,
+          duration: motionSafe ? 1.05 : 0.45,
           ease: 'expo.out',
           stagger: 0.07,
           scrollTrigger: { trigger: '.destinations', start: 'top 80%', once: true },
