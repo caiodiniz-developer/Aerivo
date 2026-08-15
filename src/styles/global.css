@@ -185,12 +185,14 @@ a {
   color: var(--gold);
 }
 
+/* Peso 500 e tom mais claro: o corpo estava em 300 sobre foto, e sumia. */
 .lede {
-  font-size: clamp(1rem, 1.35vw, 1.3rem);
-  font-weight: 300;
-  line-height: 1.62;
-  color: var(--paper-dim);
+  font-size: clamp(1.02rem, 1.4vw, 1.35rem);
+  font-weight: 500;
+  line-height: 1.6;
+  color: rgba(242, 239, 233, 0.82);
   max-width: 46ch;
+  text-shadow: 0 1px 22px rgba(5, 7, 11, 0.55);
 }
 
 .eyebrow {
@@ -211,10 +213,14 @@ a {
   letter-spacing: 0.06em;
 }
 
-/* Máscara de linha usada pelo SplitText. */
-.reveal-line {
-  will-change: transform, opacity, filter;
-}
+/*
+  Máscara de linha do SplitText.
+
+  Sem `will-change`: existe uma destas por linha de texto do site inteiro —
+  dezenas de elementos — e promover todas a camada permanente (ainda por cima
+  com `filter`, dos mais caros) só drena memória de GPU. O GSAP promove cada
+  linha durante o reveal dela, que é quando importa.
+*/
 
 /*
   Folga na máscara de linha.
@@ -482,9 +488,11 @@ a {
 }
 
 .hero__sub {
-  font-size: clamp(0.95rem, 1.5vw, 1.25rem);
-  color: var(--paper-dim);
+  font-size: clamp(1.05rem, 1.7vw, 1.45rem);
+  font-weight: 600;
+  color: rgba(242, 239, 233, 0.92);
   letter-spacing: 0.01em;
+  text-shadow: 0 1px 26px rgba(5, 7, 11, 0.6);
 }
 
 .hero__foot {
@@ -887,10 +895,18 @@ a {
   object-fit: cover;
   object-position: center;
   opacity: 0;
-  /* Camada própria de composição: o crossfade vira trabalho de GPU, sem
-     repaint da imagem em tela cheia a cada frame. */
-  will-change: opacity, transform;
-  backface-visibility: hidden;
+  /*
+    NADA de `will-change` aqui.
+
+    São seis imagens em tela cheia. Com `will-change` cada uma vira camada de
+    composição permanente: 1600×900 × 4 bytes × DPR² × 6 dá centenas de MB de
+    memória de camada presa na GPU, o tempo todo — mesmo com opacity 0. Numa
+    máquina real isso derruba o framerate da página inteira, e o sintoma é
+    exatamente scroll "andando e parando".
+
+    O Chrome promove sozinho a camada enquanto a opacidade está animando, que
+    é o único momento em que isso é necessário.
+  */
 }
 
 /* Acima das fotos e do véu, abaixo do canvas 3D: cobre os monumentos na
@@ -998,8 +1014,10 @@ a {
 }
 
 .dest-card__landmark {
-  font-size: clamp(1rem, 1.5vw, 1.2rem);
-  color: var(--paper-dim);
+  font-size: clamp(1rem, 1.5vw, 1.22rem);
+  font-weight: 500;
+  color: rgba(242, 239, 233, 0.85);
+  text-shadow: 0 1px 20px rgba(5, 7, 11, 0.55);
 }
 
 .dest-card__facts {

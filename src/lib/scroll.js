@@ -49,11 +49,15 @@ export function initSmoothScroll() {
     // próprio usuário. Desligar aqui era o único interruptor capaz de matar o
     // smooth scroll por completo — e é ligado por "efeitos de animação" off
     // no Windows, economia de bateria, ou "Reduce motion" no macOS.
-    lerp: reducedMotion ? 0.3 : 0.12,
+    // Quanto MENOR o lerp, mais inércia. 0,065 dá o deslize longo de site
+    // premium: cada tique da roda vira um movimento que continua por ~1s.
+    lerp: reducedMotion ? 0.2 : 0.065,
     smoothWheel: true,
     // Touch fica nativo: suavizar o dedo deixa a página com sensação pesada.
     syncTouch: false,
-    wheelMultiplier: 1,
+    // Compensa a inércia maior: com lerp baixo, um multiplicador de 1 faria
+    // a página parecer lenta para percorrer.
+    wheelMultiplier: 1.15,
     touchMultiplier: 1,
     // O rAF é nosso, via ticker do GSAP — nunca os dois ao mesmo tempo.
     autoRaf: false,

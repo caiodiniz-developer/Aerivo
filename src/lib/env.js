@@ -98,8 +98,16 @@ export const videoSrc = (() => {
     : "/media/jet-scrub.mp4";
 })();
 
+/**
+ * Teto de DPR do canvas 3D.
+ *
+ * `2` num monitor HiDPI quadruplica os pixels a renderizar por frame. Numa
+ * cena com campo de nuvens instanciado, cubemap de ambiente e esteiras, é a
+ * diferença entre 60fps e 25 — e a página inteira engasga junto, porque o
+ * scroll compete pelo mesmo frame. 1,5 já é indistinguível a olho.
+ */
 export const dpr =
-  tier === "high" ? [1, 2] : tier === "mid" ? [1, 1.5] : [1, 1.25];
+  tier === "high" ? [1, 1.5] : tier === "mid" ? [1, 1.35] : [1, 1];
 
 export const quality = {
   low: {
