@@ -40,16 +40,17 @@ export function initSmoothScroll() {
   if (lenis) return lenis
 
   lenis = new Lenis({
-    // `duration` em vez de `lerp`: dá um perfil de desaceleração constante
-    // entre os deltas da roda, que é o que apaga o "tac… tac…" do mouse.
-    duration: 1,
+    // `lerp` em vez de `duration`: é o modo recomendado do Lenis e independe
+    // de framerate. `duration` reinicia uma animação por evento de roda, o
+    // que em trackpad (dezenas de eventos por segundo) se atropela.
+    lerp: 0.12,
     smoothWheel: !reducedMotion,
-    // Sem suavização quando o usuário pediu menos movimento: scroll nativo.
-    ...(reducedMotion ? { duration: 0, smoothWheel: false } : null),
     // Touch fica nativo: suavizar o dedo deixa a página com sensação pesada.
     syncTouch: false,
-    wheelMultiplier: 0.9,
+    wheelMultiplier: 1,
     touchMultiplier: 1,
+    // O rAF é nosso, via ticker do GSAP — nunca os dois ao mesmo tempo.
+    autoRaf: false,
   })
 
   lenis.on('scroll', ScrollTrigger.update)
@@ -96,6 +97,18 @@ export function stopScroll() {
 
 export function startScroll() {
   lenis?.start()
+  document.documentElement.classList.remove('is-locked')
+}
+
+/**
+ * Rede de segurança: se por qualquer caminho o Lenis ficar parado depois do
+ * preloader, a página volta a rolar nativamente — sem suavização nenhuma, que
+ * é exatamente o sintoma de "o smooth scroll não funciona". Isto garante que
+ * ele esteja rodando quando a página está visível.
+ */
+export function ensureScrollRunning() {
+  if (!lenis) return
+  if (lenis.isStopped) lenis.start()
   document.documentElement.classList.remove('is-locked')
 }
 

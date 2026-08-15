@@ -314,7 +314,7 @@ a {
 }
 
 .nav__logo {
-  height: clamp(2.1rem, 3.4vw, 3rem);
+  height: clamp(3rem, 5vw, 4.4rem);
   width: auto;
   filter: drop-shadow(0 2px 14px rgba(5, 7, 11, 0.6));
 }

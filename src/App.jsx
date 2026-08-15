@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
-import { ScrollTrigger } from './lib/scroll'
+import { ScrollTrigger, ensureScrollRunning } from './lib/scroll'
 import Preloader from './components/Preloader'
 import StageBackdrop from './components/StageBackdrop'
 import { Nav, ProgressRail, FilmGrain } from './components/Chrome'
@@ -19,6 +19,12 @@ export default function App() {
 
   // A altura da viewport muda quando a barra do navegador mobile recolhe;
   // sem remedir, todos os pontos de gatilho ficam alguns pixels errados.
+  // Se o preloader terminar por um caminho que não devolva o scroll, a página
+  // rola nativamente e o smooth some. Esta checagem fecha esse buraco.
+  useEffect(() => {
+    if (ready) ensureScrollRunning()
+  }, [ready])
+
   useEffect(() => {
     const refresh = () => ScrollTrigger.refresh()
     window.addEventListener('orientationchange', refresh)
