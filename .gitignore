@@ -1,10 +1,15 @@
 node_modules/
 dist/
 
-# Derivados de assets/ — gerados por `npm run encode:video`
-public/media/
-public/models/
+# Masters de origem. Pesados (~74 MB) e necessários apenas para REGERAR os
+# derivados com `npm run assets` — nunca em runtime. Ficam fora do repositório
+# para o clone do Vercel não carregar isso a cada deploy.
+#
+# Guarde-os fora do git (drive/storage). Se preferir versioná-los, remova as
+# duas linhas abaixo e use Git LFS: são arquivos binários grandes.
+assets/
 
 .DS_Store
 *.local
 .vite/
+.vercel/

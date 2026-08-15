@@ -73,7 +73,7 @@ export const destinations = [
     code: 'HND',
     time: '24h 15',
     landmark: 'A Torre de Tóquio, com o Fuji ao fundo',
-    photo: '/media/torre%20de%20toquio.jpg',
+    photo: '/media/torre-de-toquio.jpg',
     basePrice: 8740,
   },
   {
@@ -82,7 +82,7 @@ export const destinations = [
     code: 'GIG',
     time: '01h 05',
     landmark: 'O Cristo e o Pão de Açúcar',
-    photo: '/media/cristo%20redentor.jpg',
+    photo: '/media/cristo-redentor.jpg',
     basePrice: 1240,
   },
   {
@@ -100,7 +100,7 @@ export const destinations = [
     code: 'BCN',
     time: '10h 45',
     landmark: 'A Sagrada Família',
-    photo: '/media/sagrada%20familia.jpg',
+    photo: '/media/sagrada-familia.jpg',
     basePrice: 4720,
   },
   {
@@ -109,7 +109,7 @@ export const destinations = [
     code: 'MEX',
     time: '10h 20',
     landmark: 'Chichén Itzá',
-    photo: '/media/chicen%20itza.jpg',
+    photo: '/media/chichen-itza.jpg',
     basePrice: 3960,
   },
 ]

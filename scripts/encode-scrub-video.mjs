@@ -2,6 +2,10 @@
  * Prepara tudo que sai de `assets/` para `public/`: as variantes de vídeo do
  * scrub, o poster e o modelo 3D.
  *
+ * PASSO LOCAL, NÃO DE BUILD. O `public/` já vai versionado e pronto, então o
+ * deploy nunca roda este script — ele só é necessário quando os masters em
+ * `assets/` mudarem. É por isso que `assets/` fica fora do repositório.
+ *
  * Requisito do scrub: GOP de 1 (all-intra). Cada frame vira um keyframe, então
  * `video.currentTime = t` resolve sem precisar decodificar um GOP inteiro — é o
  * que elimina o "travamento" clássico do scroll-scrub.

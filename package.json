@@ -4,6 +4,9 @@
   "version": "1.0.0",
   "type": "module",
   "description": "Experiência cinematográfica scroll-driven para companhia aérea",
+  "engines": {
+    "node": ">=20.19"
+  },
   "scripts": {
     "dev": "vite",
     "build": "vite build",
