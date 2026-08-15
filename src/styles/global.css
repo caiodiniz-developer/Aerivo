@@ -87,7 +87,13 @@ body {
   line-height: 1.55;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  overflow-x: hidden;
+  /* `clip`, NÃO `hidden`.
+     `overflow-x: hidden` força `overflow-y: auto` e transforma o <body> em
+     contêiner de rolagem próprio. A barra sai do documento e vai para o body,
+     e o Lenis — que controla a window — passa a mexer no elemento errado: o
+     navegador rola nativamente por baixo e o smooth scroll simplesmente não
+     acontece. `clip` recorta o transbordo horizontal sem criar scroller. */
+  overflow-x: clip;
   text-rendering: optimizeLegibility;
 }
 
@@ -285,8 +291,17 @@ a {
   justify-content: space-between;
   gap: 1rem;
   padding: clamp(1.1rem, 2.4vw, 1.9rem) var(--gutter);
-  mix-blend-mode: difference;
   color: #fff;
+}
+
+/* O `difference` fica só nos links. Aplicado na barra inteira, ele invertia
+   as cores da logo e a deixava irreconhecível. */
+.nav__links {
+  mix-blend-mode: difference;
+}
+
+.nav__brand {
+  text-shadow: 0 1px 18px rgba(5, 7, 11, 0.75);
 }
 
 .nav__brand {
@@ -298,12 +313,24 @@ a {
   letter-spacing: 0.02em;
 }
 
+.nav__logo {
+  height: clamp(2.1rem, 3.4vw, 3rem);
+  width: auto;
+  filter: drop-shadow(0 2px 14px rgba(5, 7, 11, 0.6));
+}
+
 .nav__brand span {
   font-family: var(--font-ui);
   font-size: 0.6rem;
   letter-spacing: 0.3em;
   text-transform: uppercase;
   opacity: 0.6;
+}
+
+@media (max-width: 480px) {
+  .nav__brand span {
+    display: none;
+  }
 }
 
 .nav__links {
@@ -1085,6 +1112,39 @@ a {
   letter-spacing: 0.2em;
   text-transform: uppercase;
   color: var(--paper-faint);
+}
+
+.footer__brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.7rem;
+}
+
+.footer__logo {
+  height: 1.6rem;
+  width: auto;
+  opacity: 0.75;
+}
+
+.footer__credit {
+  text-transform: none;
+  letter-spacing: 0.08em;
+}
+
+.footer__heart {
+  color: #e2564d;
+}
+
+.footer__credit a {
+  color: var(--paper-dim);
+  border-bottom: 1px solid var(--line);
+  padding-bottom: 1px;
+  transition: color 0.4s var(--ease-out), border-color 0.4s var(--ease-out);
+}
+
+.footer__credit a:hover {
+  color: var(--gold);
+  border-color: var(--gold);
 }
 
 /* ------------------------------------------------------------

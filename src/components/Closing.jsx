@@ -111,10 +111,21 @@ export default function Closing() {
 export function Footer() {
   return (
     <footer className="footer">
-      <span>
-        © {new Date().getFullYear()} {brand.name}
+      <span className="footer__brand">
+        <img className="footer__logo" src="/logo-mark.png" alt={brand.name} />© {new Date().getFullYear()}
       </span>
-      <span>Feito para quem prefere a janela</span>
+
+      <span className="footer__credit">
+        Desenvolvido com{' '}
+        <span className="footer__heart" role="img" aria-label="amor">
+          ♥
+        </span>{' '}
+        por{' '}
+        <a href="https://caiodiniz.dev.br" target="_blank" rel="noopener noreferrer">
+          Caio Diniz
+        </a>
+      </span>
+
       <span className="mono">GRU · CDG · HND</span>
     </footer>
   )

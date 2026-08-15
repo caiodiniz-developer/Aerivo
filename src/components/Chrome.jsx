@@ -13,7 +13,8 @@ export function Nav() {
   return (
     <header className="nav">
       <a className="nav__brand" href="#top" onClick={(e) => onJump(e, '#top')}>
-        {brand.name} <span>{brand.tag}</span>
+        <img className="nav__logo" src="/logo-nav.png" alt={brand.name} />
+        <span>{brand.tag}</span>
       </a>
       <nav className="nav__links" aria-label="Seções">
         {navItems.map((item) => (
