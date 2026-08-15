@@ -4,7 +4,7 @@ import { ScrollTrigger, progress } from '../lib/scroll'
 import { splitLines, within, hidden, shown, revealDuration, useResizeKey } from '../lib/split'
 import { motionSafe } from '../lib/env'
 import { clamp } from '../lib/math'
-import { buildLanding } from '../lib/flight'
+import { buildLandingTimeline } from '../lib/flight'
 import { closing, brand } from '../content'
 
 export default function Closing() {
@@ -14,29 +14,51 @@ export default function Closing() {
   // O avião chega pela direita, desce na diagonal e para logo abaixo do
   // botão. Uma vez só: aqui a jornada acaba, não repete.
   useLayoutEffect(() => {
-    let landing = null
+    const ctx = gsap.context(() => {
+      const mm = gsap.matchMedia()
+      const setup = (mobile) => () => {
+        // Timeline exclusiva desta seção, também scrubbed — sem relação
+        // nenhuma com a dos destinos.
+        // O painel próprio da seção cobre os monumentos. Entra cedo, junto
+        // com o topo da seção, para não haver quadro nenhum com foto de país
+        // atrás do "Reserve sua janela".
+        // Elemento direto, não seletor: o `gsap.context` limita seletores ao
+        // seu root, e o backdrop é montado fora desta seção.
+        const coverPanel = document.querySelector('.backdrop__closing')
+        if (!coverPanel) return
+        const panel = gsap.timeline({ defaults: { ease: 'none' } })
+        panel.fromTo(coverPanel, { opacity: 0 }, { opacity: 1, duration: 1 })
+        const cover = ScrollTrigger.create({
+          trigger: root.current,
+          start: 'top bottom',
+          end: 'top 55%',
+          scrub: 0.1,
+          invalidateOnRefresh: true,
+          animation: panel,
+        })
 
-    const st = ScrollTrigger.create({
-      trigger: root.current,
-      start: 'top bottom-=25%',
-      end: 'bottom bottom',
-      onUpdate: (self) => (progress.parkBlend = clamp(self.progress / 0.3)),
-      onEnter: () => {
-        landing?.kill()
-        landing = buildLanding()
-      },
-      onLeaveBack: () => {
-        progress.parkBlend = 0
-        landing?.kill()
-        landing = null
-      },
-    })
+        const st = ScrollTrigger.create({
+          trigger: root.current,
+          start: 'top 85%',
+          end: 'top 20%',
+          scrub: 0.1,
+          invalidateOnRefresh: true,
+          animation: buildLandingTimeline(mobile),
+          onUpdate: (self) => (progress.parkBlend = clamp(self.progress / 0.2)),
+          onLeaveBack: () => (progress.parkBlend = 0),
+        })
 
-    return () => {
-      st.kill()
-      landing?.kill()
-      progress.parkBlend = 0
-    }
+        return () => {
+          cover.kill()
+          st.kill()
+          progress.parkBlend = 0
+        }
+      }
+      mm.add('(min-width: 861px)', setup(false))
+      mm.add('(max-width: 860px)', setup(true))
+    }, root)
+
+    return () => ctx.revert()
   }, [])
 
   useLayoutEffect(() => {

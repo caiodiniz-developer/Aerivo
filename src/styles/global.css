@@ -807,9 +807,9 @@ a {
   z-index: 3;
 }
 
+/* Sem `sticky`: quem segura o palco é o `pin` do ScrollTrigger, que também
+   cria o espaço de scroll e garante faixas iguais por destino. */
 .dest-stage {
-  position: sticky;
-  top: 0;
   height: 100svh;
   overflow: hidden;
   display: grid;
@@ -826,6 +826,9 @@ a {
   background: var(--ink);
 }
 
+/* Todas as fotos ficam montadas ao mesmo tempo, empilhadas. Quem acende cada
+   uma é a master timeline, pelo scroll — nenhuma troca de `src` em runtime,
+   que é o que causava flicker e destino pulado. */
 .backdrop__layer {
   position: absolute;
   inset: 0;
@@ -834,6 +837,18 @@ a {
   background-size: cover;
   background-repeat: no-repeat;
   will-change: opacity, transform;
+}
+
+/* Acima das fotos e do véu, abaixo do canvas 3D: cobre os monumentos na
+   seção final sem esconder o avião, que renderiza por cima de tudo isto. */
+.backdrop__closing {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  opacity: 0;
+  background:
+    radial-gradient(95% 70% at 50% 112%, rgba(233, 184, 114, 0.16), rgba(5, 7, 11, 0) 60%),
+    var(--ink);
 }
 
 .backdrop__scrim {

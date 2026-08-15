@@ -4,10 +4,18 @@ import { ScrollTrigger, progress } from '../lib/scroll'
 import { splitLines, within, hidden, shown, revealDuration, useResizeKey } from '../lib/split'
 import { motionSafe } from '../lib/env'
 import { clamp } from '../lib/math'
-import { flight } from '../three/state'
-import { buildCrossing, releaseFlight, FlightState } from '../lib/flight'
+import { buildMasterTimeline } from '../lib/flight'
 import { destinations } from '../content'
-import { setBackdropPhoto, PHOTO_FADE } from './StageBackdrop'
+
+/**
+ * Alturas de viewport de scroll por destino. Compacto de propósito: a
+ * velocidade continua sendo do usuário, o que muda é quantos pixels de scroll
+ * equivalem a uma viagem inteira.
+ */
+const SCROLL_PER_DEST = 0.75
+
+/** Suavização quase nula: mais que isto e o avião passa a "correr atrás". */
+const SCRUB = 0.1
 
 const brl = new Intl.NumberFormat('pt-BR', {
   style: 'currency',
@@ -17,79 +25,66 @@ const brl = new Intl.NumberFormat('pt-BR', {
 
 export default function Destinations() {
   const root = useRef(null)
-  const track = useRef(null)
+  const stage = useRef(null)
   const resizeKey = useResizeKey()
   const [active, setActive] = useState(0)
-  const phase = useRef(FlightState.ENTERING)
+  const indexRef = useRef(0)
 
-  /* ---------------- o voo: uma timeline por travessia ---------------- */
+  /* ---------------- a viagem inteira, pilotada pelo scroll ---------------- */
   useLayoutEffect(() => {
-    let tl = null
-    let index = 0
-    let disposed = false
-    let onScreen = false
+    const ctx = gsap.context(() => {
+      const mm = gsap.matchMedia()
 
-    const fly = () => {
-      if (disposed || !onScreen) return
-      tl = buildCrossing({
-        loop: !!destinations[index].loop,
-        onState: (s) => (phase.current = s),
-        onComplete: () => {
-          // Aqui o avião já está inteiramente fora de quadro pela esquerda.
-          // É o único ponto em que o destino muda.
-          phase.current = FlightState.CHANGING
-          index = (index + 1) % destinations.length
-          setActive(index)
-          // A próxima travessia espera a foto acabar de entrar.
-          gsap.delayedCall(PHOTO_FADE, fly)
-        },
-      })
-    }
+      mm.add('(min-width: 861px)', () => setupFlight(false))
+      mm.add('(max-width: 860px)', () => setupFlight(true))
 
-    // Presença na cena 3D. O voo só existe enquanto a seção está à vista:
-    // fora dela ele é encerrado por completo, para não disputar a pose com o
-    // pouso do fecho nem gastar frames fora de quadro.
-    const blend = ScrollTrigger.create({
-      trigger: track.current,
-      start: 'top bottom-=10%',
-      end: 'bottom top+=10%',
-      onUpdate: (self) => {
-        const p = self.progress
-        progress.destBlend = clamp(Math.min(p / 0.1, (1 - p) / 0.1))
-      },
-      onToggle: (self) => {
-        onScreen = self.isActive
-        if (onScreen) fly()
-        else {
-          tl = null
-          releaseFlight()
+      function setupFlight(mobile) {
+        // `document.querySelectorAll` de propósito: o `gsap.context` limita
+        // seletores ao seu root, e o backdrop é montado fora desta seção —
+        // pelo seletor escopado a lista vinha vazia e o pin nunca nascia.
+        const layers = Array.from(document.querySelectorAll('.backdrop__layer'))
+        if (!layers.length) return
+
+        const master = buildMasterTimeline(destinations, layers, mobile)
+
+        const st = ScrollTrigger.create({
+          trigger: stage.current,
+          start: 'top top',
+          // Faixa igual por destino, recalculada no refresh — nada de pixel
+          // fixo pensado numa tela só.
+          end: () => `+=${destinations.length * window.innerHeight * SCROLL_PER_DEST}`,
+          pin: true,
+          pinSpacing: true,
+          scrub: SCRUB,
+          invalidateOnRefresh: true,
+          animation: master,
+          onUpdate: (self) => {
+            // O 3D acompanha o mesmo progresso.
+            progress.destBlend = clamp(Math.min(self.progress / 0.04, (1 - self.progress) / 0.04))
+            // O texto troca só quando o índice muda de verdade — um setState
+            // por frame de scroll derrubaria o framerate.
+            const i = clamp(
+              Math.floor(self.progress * destinations.length),
+              0,
+              destinations.length - 1,
+            )
+            if (i !== indexRef.current) {
+              indexRef.current = i
+              setActive(i)
+            }
+          },
+          onLeave: () => (progress.destBlend = 0),
+          onLeaveBack: () => (progress.destBlend = 0),
+        })
+
+        return () => {
+          st.kill()
+          progress.destBlend = 0
         }
-      },
-      onLeave: () => (progress.destBlend = 0),
-      onLeaveBack: () => (progress.destBlend = 0),
-    })
+      }
+    }, root)
 
-    ScrollTrigger.refresh()
-    return () => {
-      disposed = true
-      tl = null
-      releaseFlight()
-      blend.kill()
-      progress.destBlend = 0
-    }
-  }, [])
-
-  /* ---------------- foto de fundo ---------------- */
-  useEffect(() => {
-    setBackdropPhoto(destinations[active].photo)
-  }, [active])
-
-  // Pré-carrega todas: a troca é instantânea e o crossfade nunca mostra vazio.
-  useEffect(() => {
-    destinations.forEach((d) => {
-      const img = new Image()
-      img.src = d.photo
-    })
+    return () => ctx.revert()
   }, [])
 
   /* ---------------- reveals ---------------- */
@@ -126,8 +121,8 @@ export default function Destinations() {
   const d = destinations[active]
 
   return (
-    <section id="destinos" className="dest-track" ref={track}>
-      <div className="dest-stage" ref={root}>
+    <section id="destinos" className="dest-track" ref={root}>
+      <div className="dest-stage" ref={stage}>
         <div className="dest-inner">
           <div className="dest-head">
             <p className="eyebrow">06 — Malha</p>
@@ -163,9 +158,9 @@ export default function Destinations() {
         </div>
       </div>
 
-      {/* Um bloco de scroll por destino: é o que dá a cada um a sua travessia
-          inteira, da direita até o fim da tela. */}
-      <div style={{ height: `${destinations.length * 95}vh` }} aria-hidden="true" />
+      {/* Nada de espaçador manual: o `pin` do ScrollTrigger cria o espaço, e
+          o `end` deriva de destinations.length — assim a faixa de cada
+          destino é sempre idêntica, em qualquer altura de tela. */}
     </section>
   )
 }

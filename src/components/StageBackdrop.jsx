@@ -1,77 +1,47 @@
-import { useEffect, useRef } from 'react'
-import gsap from 'gsap'
-import { motionSafe } from '../lib/env'
+import { useEffect } from 'react'
+import { destinations } from '../content'
 
 /**
- * Fundo da cena, atrás do canvas 3D.
+ * Fundos dos destinos: TODOS renderizados de uma vez, empilhados, e nenhum
+ * troca de `src`. Quem acende e apaga cada camada é a master timeline, pelo
+ * scroll — trocar a imagem por estado do React brigaria com o ScrollTrigger e
+ * é o que causava flicker e destino pulado.
  *
- * Fica em `z-index: 0`, abaixo do WebGL (`z-index: 1`): assim o avião voa
- * *sobre* a foto. Isso só funciona porque o canvas é alpha e, nestes trechos,
- * o céu 3D sai da câmera principal — ver `WorldVisibility` em three/Scene.
+ * Fica em `z-index: 0`, abaixo do canvas WebGL (`z-index: 1`), que é o que põe
+ * o avião voando *sobre* a foto. Só funciona porque o canvas é alpha e, neste
+ * trecho, o céu 3D sai da câmera principal (ver `WorldVisibility`).
  *
- * Duas camadas empilhadas trocando de vez: a que entra faz o fade por cima da
- * que sai, então a transição não passa pelo fundo da página no meio do
- * caminho — é o que deixa a troca limpa em vez de piscar.
+ * `position: fixed` aqui é consequência de o canvas ser fixo: os dois têm de
+ * ocupar exatamente o mesmo retângulo para compor. O vazamento para a última
+ * seção não é resolvido por posicionamento e sim pela própria timeline — o
+ * último segmento apaga o fundo antes de o pin terminar.
  */
 export default function StageBackdrop() {
-  const layers = [useRef(null), useRef(null)]
-  const front = useRef(0)
-  const shown = useRef(null)
-
+  // Pré-carrega tudo: rolar rápido nunca deve mostrar imagem vazia.
   useEffect(() => {
-    const onPhoto = (e) => {
-      const src = e.detail
-      if (src === shown.current) return
-      shown.current = src
-
-      const next = layers[1 - front.current].current
-      const prev = layers[front.current].current
-      if (!next) return
-
-      next.style.backgroundImage = `url("${src}")`
-      gsap.killTweensOf([next, prev])
-      gsap.set(next, { zIndex: 2 })
-      gsap.set(prev, { zIndex: 1 })
-
-      // A que entra sobe por cima da que sai, com um respiro de escala em
-      // sentidos opostos. Nunca passa pelo fundo da página no meio do
-      // caminho — é isso que evita o flash entre destinos.
-      const tl = gsap.timeline()
-      tl.fromTo(
-        next,
-        { opacity: 0, scale: motionSafe ? 1.05 : 1, filter: motionSafe ? 'blur(12px)' : 'none' },
-        {
-          opacity: 1,
-          scale: 1,
-          filter: 'blur(0px)',
-          duration: motionSafe ? PHOTO_FADE : 0.35,
-          ease: 'power2.inOut',
-        },
-      )
-      if (prev && motionSafe) {
-        tl.to(prev, { scale: 1.04, duration: PHOTO_FADE, ease: 'power2.inOut' }, 0)
-      }
-      tl.set(prev, { opacity: 0, scale: 1, filter: 'blur(0px)' })
-
-      front.current = 1 - front.current
-    }
-
-    window.addEventListener('aerivo:photo', onPhoto)
-    return () => window.removeEventListener('aerivo:photo', onPhoto)
+    destinations.forEach((d) => {
+      const img = new Image()
+      img.src = d.photo
+    })
   }, [])
 
   return (
     <div className="backdrop" aria-hidden="true">
-      <div className="backdrop__layer" ref={layers[0]} />
-      <div className="backdrop__layer" ref={layers[1]} />
+      {destinations.map((d, i) => (
+        <div
+          key={d.code}
+          className="backdrop__layer"
+          data-bg={i}
+          style={{ backgroundImage: `url("${d.photo}")` }}
+        />
+      ))}
       <div className="backdrop__scrim" />
+
+      {/* Painel próprio da seção final. Vive na mesma pilha das fotos, por
+          cima delas, e é ele que apaga os monumentos quando o CTA entra —
+          por isso a master timeline não precisa apagar a última foto, que era
+          o que abria a tela preta entre a última viagem e o CTA. */}
+      <div className="backdrop__closing" />
     </div>
   )
 }
-
-/** Duração do crossfade. O voo seguinte espera exatamente isto. */
-export const PHOTO_FADE = 1.1
-
-/** Troca a foto de fundo. Evento em vez de contexto: quem chama é uma timeline. */
-export const setBackdropPhoto = (src) =>
-  window.dispatchEvent(new CustomEvent('aerivo:photo', { detail: src }))
